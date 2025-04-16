@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <title>Push Up Odyssey</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+
+  <!-- Lien vers le manifest -->
+  <link rel="manifest" href="manifest.json">
+
   <!-- Bibliothèques p5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
@@ -62,8 +65,8 @@
   <!-- Éléments HTML fixes -->
   <div id="chrono">Temps: 0.0 sec</div>
   <div id="level">Niveau: <span style="color:white;">1</span></div>
-  <button id="startButton">💪😎 Go !</button>
-  <button id="stopButton">Échec 🥵</button>
+  <button id="startButton">💪😎Go !</button>
+  <button id="stopButton">Échec🥵</button>
   <button id="restartButton">Recommencer 🔄</button>
 
   <script>
@@ -71,14 +74,19 @@
      ** 1) Variables pour IMAGES et PRELOAD    **
      ********************************************/
     let pushupImg1, pushupImg2, pushupImg3, pushupImg4, pushupImg5;
+    let echecImg, victoryImg;
 
     function preload() {
-      // Chargez vos 5 images (uploadées dans l’éditeur p5)
+      // Chargez vos 5 images pushup
       pushupImg1 = loadImage('pushup1.png');
       pushupImg2 = loadImage('pushup2.png');
       pushupImg3 = loadImage('pushup3.png');
       pushupImg4 = loadImage('pushup4.png');
       pushupImg5 = loadImage('pushup5.png');
+
+      // Charge les 2 nouvelles images
+      echecImg = loadImage('echec.png');
+      victoryImg = loadImage('victory.png');
     }
 
     /********************************************
@@ -222,11 +230,8 @@
     let linePoints = [];
     let currentX = 0;
     let currentY;
-    // On ne force plus "currentZone" comme zone stable : on le recalcule dynamiquement
-    // Mais on garde la variable pour l'image courante
-    let currentZone = 3;
+    let currentZone = 3; // zone dynamique
 
-    // Mécanisme de transition (décision zoneCible, etc.)
     let speedX = 0.3;
     let offsetX = 0;
     let nextZoneTransitionTime = 0;
@@ -262,41 +267,44 @@
     const popupRadius = 15;
     let canvas;
 
-    // Pour le gros popup de niveau
+    // Suivi du niveau (popups)
     let prevLevel = 1;
     let levelPopupTimestamp = 0;
 
-    // Flags pour jouer certains sons qu'une seule fois
+    // Flags pour sons
     let victorySoundPlayed = false;
     let happyEndingPlayed = false;
+
+    // ----------------- NOUVEAUTÉS POUR ÉCHEC & VICTORY ------------------
+    // Échec
+    let echecActive = false;   // Indique si "échec" est affiché
+    let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
+
+    // On va dessiner victory.png en mode spiral
+    // (À la place du rectangle blanc + "💪💪💪")
+    // -------------------------------------------------------------------
+
 
     /********************************************
      ** 4) Fonctions pour DÉTECTER la zone     **
      ********************************************/
-    // On va déduire la zone (1..5) en fonction de currentY 
-    // (en comparant avec zoneTopY(i), zoneBottomY(i)).
     function getZoneFromY(y) {
-      // On a 5 zones ; on vérifie le y dans chaque zone
       for (let i = 1; i <= 5; i++) {
         let top = zoneTopY(i);
         let bottom = zoneBottomY(i);
-        // On met un <= sur bottom pour la zone 5
         if (y >= top && y < bottom) {
           return i;
         }
       }
-      // Si jamais on est exactement tout en bas (ou un arrondi),
-      // on renvoie zone 5
       return 5;
     }
 
     /********************************************
-     ** 5) Afficher l'image correspondant zone **
+     ** 5) Afficher l'image pushup selon zone  **
      ********************************************/
     function drawPushupImageForZone(zoneIndex) {
       if (mode !== "playing" || !running) return;
 
-      // Sélection de l'image en fonction de la zone
       let chosenImg = null;
       if (zoneIndex === 1) chosenImg = pushupImg1;
       else if (zoneIndex === 2) chosenImg = pushupImg2;
@@ -305,22 +313,17 @@
       else if (zoneIndex === 5) chosenImg = pushupImg5;
       if (!chosenImg) return;
 
-      // On veut 3/4 de la hauteur de la zone
       let effectiveHeight = height - uiMargin;
       let zoneH = effectiveHeight / 5;
-      let desiredH = zoneH * 0.75; // 3/4
+      let desiredH = zoneH * 0.75; 
       let ratio = desiredH / chosenImg.height;
       let displayW = chosenImg.width * ratio;
       let displayH = chosenImg.height * ratio;
 
-      // Position horizontale : le bout de la ligne (currentX-offsetX) + un offset
       let xPos = (currentX - offsetX) + 30;
-
-      // Position verticale : currentY
       let yPos = currentY;
 
-      // Si on est en zone 5, on s'assure que l'image ne sorte pas en bas
-      // => on limite la position de centre de l'image
+      // Limiter en bas si zone 5
       let bottomLimit = height - displayH / 2;
       if (zoneIndex === 5 && yPos > bottomLimit) {
         yPos = bottomLimit;
@@ -329,6 +332,29 @@
       imageMode(CENTER);
       image(chosenImg, xPos, yPos, displayW, displayH);
     }
+
+    // ------------------ FONCTION POUR DESSINER echec.png -------------------
+    function drawEchecImage() {
+      if (!echecActive) return; // Pas d'échec en cours => on ne dessine rien
+
+      // On veut la même dimension 3/4 d'une zone
+      let effectiveHeight = height - uiMargin;
+      let zoneH = effectiveHeight / 5;
+      let desiredH = zoneH * 0.75;
+      let ratio = desiredH / echecImg.height;
+      let displayW = echecImg.width * ratio;
+      let displayH = echecImg.height * ratio;
+
+      // On tient compte de offsetX
+      let xPos = (echecX - offsetX) + 30;
+      let yPos = echecY;
+
+      // On dessine l'image
+      imageMode(CENTER);
+      image(echecImg, xPos, yPos, displayW, displayH);
+    }
+    // -----------------------------------------------------------------------
+
 
     /********************************************
      ** 6) SETUP & RESIZE (p5.js)              **
@@ -363,13 +389,16 @@
      ** 7) BOUTONS : START, STOP, RESTART      **
      ********************************************/
     function startGame() {
-userStartAudio();
+      userStartAudio();  // Débloque l'audio sur mobile
+
       if (!running && mode === "playing") {
+        // On relance le jeu => on cache l'image échec
+        echecActive = false;
+
         gameStarted = true;
         startTime = millis();
         running = true;
         startBackgroundMusic();
-        // On réinitialise le niveau de départ
         prevLevel = 1;
         levelPopupTimestamp = millis();
         victorySoundPlayed = false;
@@ -377,10 +406,18 @@ userStartAudio();
       }
     }
     function stopGame() {
+      // Si on est en mode playing et qu'on est en train de courir
       if (running && mode === "playing") {
         elapsedTime += millis() - startTime;
         running = false;
         stopBackgroundMusic();
+
+        // Active l'image échec
+        echecActive = true;
+        // Position = dernier point de la ligne
+        let lastPt = linePoints[linePoints.length - 1];
+        echecX = lastPt.x;
+        echecY = lastPt.y;
       }
     }
     function restartGame() {
@@ -404,6 +441,9 @@ userStartAudio();
       select('#restartButton').style('display', 'none');
       select('#chrono').html("Temps: 0.0 sec");
       select('#level').html("Niveau: <span style='color:white;'>1</span>");
+
+      // On enlève l'image échec si elle était présente
+      echecActive = false;
 
       stopBackgroundMusic();
       victorySoundPlayed = false;
@@ -432,8 +472,9 @@ userStartAudio();
         drawZoneBoundaries();
         drawZoneLabels();
         drawLevelPopup();  
-        // Afficher l'image correspondant à la zone courante
         drawPushupImageForZone(currentZone);
+        // Dessine l'image "échec" si active
+        drawEchecImage();
       }
       else if (mode === "transition") {
         transitionMode();
@@ -471,7 +512,6 @@ userStartAudio();
         if (running) {
           currentX += speedX;
 
-          // Est-ce qu’on lance un changement de destination ?
           if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
             nextZoneTransitionTime = 0;
             let p = random(1);
@@ -514,19 +554,15 @@ userStartAudio();
             let dynamicZone = getZoneFromY(newY);
             currentZone = dynamicZone;
 
-            // Applique l'oscillation si on l'a activée
             if (!oscillateMode) {
               currentY = newY;
             } else {
-              // On oscille autour de la position interpolée
               let baseY = newY;
-              // On va faire une petite oscillation sinus autour de baseY
-              let amplitude = 10; // on peut ajuster
+              let amplitude = 10;
               let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
               currentY = baseY + oscillVal;
             }
 
-            // Fin de transition ?
             if (progress >= 1) {
               transitionInProgress = false;
               nextZoneTransitionTime = millis() + random(1000, 4000);
@@ -534,8 +570,7 @@ userStartAudio();
               if (oscillateMode) oscillationStartTime = millis();
             }
           } else {
-            // Pas de transitionInProgress => on reste dans la même zone,
-            // possiblement en oscillation
+            // Pas de transition => zone stable
             if (oscillateMode) {
               let baseY = zoneCenterY(currentZone);
               let amplitude = 10;
@@ -562,7 +597,6 @@ userStartAudio();
     }
 
     function transitionMode() {
-      // On n’affiche plus l’image => la ligne est en mode transition drapeau
       background(0);
       strokeWeight(4);
       stroke(currentColor);
@@ -637,13 +671,15 @@ userStartAudio();
         playHappyEndingMelody();
         happyEndingPlayed = true;
       }
-      drawFinalPopup();
+      drawFinalPopup(); 
     }
 
     /********************************************
      ** 9.1) Le POPUP de fin (dessin)          **
      ********************************************/
     function drawFinalPopup() {
+      // On garde le cycle de clignotement, mais on ne dessine plus le rectangle blanc ni "💪💪💪"
+      // À la place, on dessine victory.png, collé en bas, centré horizontalement.
       let cycleDuration = popupCycleDuration;
       let displayDuration = popupDisplayDuration;
 
@@ -653,59 +689,51 @@ userStartAudio();
           finalPopupBlinkCount++;
         }
         if (millis() - lastPopupCycleTime < displayDuration) {
-          drawPopup("💪💪💪");
+          drawVictoryImage();
         }
         if (finalPopupBlinkCount >= finalPopupTargetBlink) {
           finalPopupPermanent = true;
-          drawPopup("💪💪💪");
+          drawVictoryImage();
           select('#restartButton').style('display', 'block');
           select('#restartButton').style('left', (width / 2 - 75) + 'px');
           select('#restartButton').style('top', (height / 2 + 150) + 'px');
         }
       } else {
-        drawPopup("💪💪💪");
+        drawVictoryImage();
       }
     }
-    function drawPopup(msg) {
-      push();
-      rectMode(CENTER);
-      textAlign(CENTER, CENTER);
-      textSize(40);
-      noStroke();
-      fill(255);
-      let rectX = (width - popupW) / 2 + popupW / 2;
-      let rectY = (height - popupH) / 2 + popupH / 2;
-      rect(rectX, rectY, popupW, popupH, popupRadius);
-      fill(currentColor);
-      text(msg, rectX, rectY);
-      pop();
+
+    function drawVictoryImage() {
+      // On veut un grand ratio (ex: 80% de la hauteur)
+      let desiredH = height * 0.8;
+      let ratio = desiredH / victoryImg.height;
+      let displayW = victoryImg.width * ratio;
+      let displayH = victoryImg.height * ratio;
+
+      // Bas collé à l'écran => y = height - displayH/2
+      let xPos = width / 2;
+      let yPos = height - displayH / 2;
+
+      imageMode(CENTER);
+      image(victoryImg, xPos, yPos, displayW, displayH);
     }
 
     /********************************************
      ** 9.2) drawLevelPopup(): gros chiffre    **
      ********************************************/
     function drawLevelPopup() {
-      // Ne rien afficher si le jeu n'a pas commencé
       if (!gameStarted) return;
-
-      // Calcule le temps total
       let totalTime = elapsedTime;
       if (running) {
         totalTime += millis() - startTime;
       }
-
-      // Calcule le niveau en cours
       let level = floor(totalTime / levelInterval) + 1;
       if (level > 7) level = 7;
-
-      // Vérifie s'il y a un changement de niveau
       if (level !== prevLevel) {
-        playRetroSound(); // petit son "retro"
+        playRetroSound();
         levelPopupTimestamp = millis();
         prevLevel = level;
       }
-
-      // S'il y a moins d'1 seconde depuis le changement, on affiche un gros chiffre
       if (millis() - levelPopupTimestamp < 1000) {
         push();
         textAlign(CENTER, CENTER);
@@ -717,7 +745,6 @@ userStartAudio();
         let rectW = txtW + 2 * padding;
         let rectH = 100;
 
-        // On dessine le popup sur la droite (un peu excentré)
         let rectX = width - 20 - rectW / 2;
         let rectY = height / 2;
 
@@ -738,7 +765,6 @@ userStartAudio();
     function zoneCenterY(z) {
       let effectiveHeight = height - uiMargin;
       let zoneHeight = effectiveHeight / 5;
-      // On fait un center classique
       return uiMargin + (z - 0.5) * zoneHeight;
     }
     function zoneTopY(z) {
@@ -784,9 +810,17 @@ userStartAudio();
     }
 
     /*********************************************
-     ** 11) Pas de service worker ni manifest   **
+     ** 11) Réenregistrement du Service Worker  **
      *********************************************/
-    // On retire toute référence au SW pour éviter les erreurs dans l'éditeur p5.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('ServiceWorker enregistré avec succès:', registration.scope);
+        }, function(err) {
+          console.log('Enregistrement ServiceWorker échoué:', err);
+        });
+      });
+    }
 
   </script>
 </body>
