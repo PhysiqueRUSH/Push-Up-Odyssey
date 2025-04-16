@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Push Up Odyssey – 5 images selon zone (Mise à jour)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Bibliothèques p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+  
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #000;
+    }
+    button {
+      position: absolute;
+      z-index: 10;
+      font-size: 20px;
+      padding: 10px 20px;
+    }
+    #startButton { top: 20px; left: 20px; }
+    #stopButton { top: 20px; right: 20px; }
+    #chrono {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      color: white;
+      z-index: 10;
+    }
+    #level {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      font-weight: bold;
+      background-color: white;
+      padding: 2px 6px;
+      color: black;
+      z-index: 10;
+    }
+    #restartButton {
+      position: absolute;
+      z-index: 20;
+      font-size: 24px;
+      padding: 10px 20px;
+      display: none;
+      background-color: white;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Éléments HTML fixes -->
+  <div id="chrono">Temps: 0.0 sec</div>
+  <div id="level">Niveau: <span style="color:white;">1</span></div>
+  <button id="startButton">Start</button>
+  <button id="stopButton">Stop</button>
+  <button id="restartButton">Recommencer 🔄</button>
+
+  <script>
+    /********************************************
+     ** 1) Variables pour IMAGES et PRELOAD    **
+     ********************************************/
+    let pushupImg1, pushupImg2, pushupImg3, pushupImg4, pushupImg5;
+
+    function preload() {
+      // Chargez vos 5 images (uploadées dans l’éditeur p5)
+      pushupImg1 = loadImage('pushup1.png');
+      pushupImg2 = loadImage('pushup2.png');
+      pushupImg3 = loadImage('pushup3.png');
+      pushupImg4 = loadImage('pushup4.png');
+      pushupImg5 = loadImage('pushup5.png');
+    }
+
+    /********************************************
+     ** 2) SONS ET MUSIQUE (p5.sound)          **
+     ********************************************/
+    let retroOsc, retroEnv, pitchDropInterval;
+    function setupRetroSound() {
+      retroOsc = new p5.Oscillator('square');
+      retroOsc.amp(0);
+      retroOsc.start();
+      retroEnv = new p5.Envelope();
+      // ADSR court et percussif
+      retroEnv.setADSR(0.01, 0.1, 0.2, 0.3);
+      retroEnv.setRange(1, 0);
+    }
+    function playRetroSound() {
+      let startFreq = 400; 
+      retroOsc.freq(startFreq);
+      retroEnv.play(retroOsc);
+      pitchDropInterval = setInterval(() => {
+        startFreq -= 20;
+        if (startFreq <= 100) {
+          clearInterval(pitchDropInterval);
+        } else {
+          retroOsc.freq(startFreq);
+        }
+      }, 20);
+    }
+
+    // Musique de fond (basse + mélodie)
+    let bgBassOsc, bgBassEnv, bgMelodyOsc, bgMelodyEnv, bgMusicLoop;
+    let bgBassPattern, bgMelodyPattern, bgMusicStep;
+    function setupBackgroundMusic() {
+      // Basse
+      bgBassOsc = new p5.Oscillator('sine');
+      bgBassOsc.start();
+      bgBassOsc.amp(0);
+      bgBassEnv = new p5.Envelope();
+      bgBassEnv.setADSR(0.05, 0.1, 0.5, 0.2);
+      bgBassEnv.setRange(0.4, 0);
+      bgBassPattern = [
+        130.82, 0, 130.82, 0, 146.83, 0, 130.82, 0,
+        130.82, 0, 130.82, 0, 146.83, 0, 130.82, 0,
+        130.82, 0, 130.82, 0, 146.83, 0, 130.82, 0,
+        130.82, 0, 130.82, 0, 146.83, 0, 130.82, 0
+      ];
+      // Mélodie
+      bgMelodyOsc = new p5.Oscillator('triangle');
+      bgMelodyOsc.start();
+      bgMelodyOsc.amp(0);
+      bgMelodyEnv = new p5.Envelope();
+      bgMelodyEnv.setADSR(0.05, 0.1, 0.5, 0.2);
+      bgMelodyEnv.setRange(0.3, 0);
+      bgMelodyPattern = [
+        261.63, 293.66, 329.63, 0, 392.00, 392.00, 329.63, 0,
+        261.63, 261.63, 293.66, 0, 329.63, 392.00, 440.00, 0,
+        392.00, 349.23, 329.63, 0, 293.66, 293.66, 261.63, 0,
+        261.63, 293.66, 329.63, 392.00, 329.63, 293.66, 261.63, 0
+      ];
+      bgMusicStep = 0;
+      let noteInterval = 0.3; // 0.3 s par note
+      bgMusicLoop = new p5.SoundLoop(function(time) {
+        let bassNote = bgBassPattern[bgMusicStep];
+        if (bassNote > 0) {
+          bgBassOsc.freq(bassNote, 0.05);
+          bgBassEnv.play(bgBassOsc, time);
+        }
+        let melodyNote = bgMelodyPattern[bgMusicStep];
+        if (melodyNote > 0) {
+          bgMelodyOsc.freq(melodyNote, 0.05);
+          bgMelodyEnv.play(bgMelodyOsc, time);
+        }
+        bgMusicStep = (bgMusicStep + 1) % bgBassPattern.length;
+      }, noteInterval);
+    }
+    function startBackgroundMusic() {
+      if (bgMusicLoop) bgMusicLoop.start();
+    }
+    function stopBackgroundMusic() {
+      if (bgMusicLoop) bgMusicLoop.stop();
+    }
+
+    // Son de victoire
+    let victoryOsc, victoryEnv;
+    function setupVictorySound() {
+      victoryOsc = new p5.Oscillator('sawtooth');
+      victoryOsc.start();
+      victoryOsc.amp(0);
+      victoryEnv = new p5.Envelope();
+      victoryEnv.setADSR(0.01, 0.15, 0.1, 0.2);
+      victoryEnv.setRange(1, 0);
+    }
+    function playVictorySound() {
+      if (!victoryOsc) setupVictorySound();
+      let notes = [523.25, 659.25, 783.99];
+      let delay = 0;
+      notes.forEach(note => {
+        setTimeout(() => {
+          victoryOsc.freq(note, 0.05);
+          victoryEnv.play(victoryOsc);
+        }, delay * 1000);
+        delay += 0.25;
+      });
+    }
+
+    // Happy Ending
+    let happyOsc, happyEnv;
+    function setupHappyEndingSound() {
+      happyOsc = new p5.Oscillator('triangle');
+      happyOsc.start();
+      happyOsc.amp(0);
+      happyEnv = new p5.Envelope();
+      happyEnv.setADSR(0.05, 0.15, 0.6, 0.3);
+      happyEnv.setRange(0.5, 0);
+    }
+    function playHappyEndingMelody() {
+      if (!happyOsc) setupHappyEndingSound();
+      let melody = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50];
+      let delay = 0;
+      melody.forEach(note => {
+        setTimeout(() => {
+          happyOsc.freq(note, 0.05);
+          happyEnv.play(happyOsc);
+        }, delay * 1000);
+        delay += 0.5;
+      });
+    }
+
+    /********************************************
+     ** 3) VARIABLES & ÉTATS DU JEU (global)   **
+     ********************************************/
+    let mode = "playing"; // ou "transition", "spiral"
+    let running = false;
+    let startTime = 0;
+    let elapsedTime = 0;
+    let gameStarted = false;
+    let showIntro = true;
+    let introStartTime = 0;
+    const uiMargin = 80;
+
+    let linePoints = [];
+    let currentX = 0;
+    let currentY;
+    // On ne force plus "currentZone" comme zone stable : on le recalcule dynamiquement
+    // Mais on garde la variable pour l'image courante
+    let currentZone = 3;
+
+    // Mécanisme de transition (décision zoneCible, etc.)
+    let speedX = 0.3;
+    let offsetX = 0;
+    let nextZoneTransitionTime = 0;
+    let transitionInProgress = false;
+    let zoneTransitionStartTime = 0;
+    const zoneTransitionDuration = 1500;
+    let oldY = 0;
+    let targetY = 0;
+    let targetZone = 3;
+    let oscillateMode = false;
+    let oscillationStartTime = 0;
+    const oscillationPeriod = 3000;
+
+    const levelInterval = 20000;
+    const strokeColors = ["#8A2BE2", "#4B0082", "#0000FF", "#008000", "#FFFF00", "#FFA500", "#FF0000"];
+    let currentColor = strokeColors[0];
+    const victoryTime = 140000;
+    const spiralDuration = 5000;
+    const flagBlinkCycleDuration = 500;
+    const flagDisplayDuration = 250;
+    const flagTargetBlink = 4;
+    let transitionStartTime = null;
+    let spiralStartTime = null;
+    let finalPointAtVictory = null;
+    let finalPopupBlinkCount = 0;
+    let lastPopupCycleTime = 0;
+    const popupCycleDuration = 500;
+    const popupDisplayDuration = 300;
+    const finalPopupTargetBlink = 8;
+    let finalPopupPermanent = false;
+    const popupW = 300;
+    const popupH = 100;
+    const popupRadius = 15;
+    let canvas;
+
+    // Pour le gros popup de niveau
+    let prevLevel = 1;
+    let levelPopupTimestamp = 0;
+
+    // Flags pour jouer certains sons qu'une seule fois
+    let victorySoundPlayed = false;
+    let happyEndingPlayed = false;
+
+    /********************************************
+     ** 4) Fonctions pour DÉTECTER la zone     **
+     ********************************************/
+    // On va déduire la zone (1..5) en fonction de currentY 
+    // (en comparant avec zoneTopY(i), zoneBottomY(i)).
+    function getZoneFromY(y) {
+      // On a 5 zones ; on vérifie le y dans chaque zone
+      for (let i = 1; i <= 5; i++) {
+        let top = zoneTopY(i);
+        let bottom = zoneBottomY(i);
+        // On met un <= sur bottom pour la zone 5
+        if (y >= top && y < bottom) {
+          return i;
+        }
+      }
+      // Si jamais on est exactement tout en bas (ou un arrondi),
+      // on renvoie zone 5
+      return 5;
+    }
+
+    /********************************************
+     ** 5) Afficher l'image correspondant zone **
+     ********************************************/
+    function drawPushupImageForZone(zoneIndex) {
+      if (mode !== "playing" || !running) return;
+
+      // Sélection de l'image en fonction de la zone
+      let chosenImg = null;
+      if (zoneIndex === 1) chosenImg = pushupImg1;
+      else if (zoneIndex === 2) chosenImg = pushupImg2;
+      else if (zoneIndex === 3) chosenImg = pushupImg3;
+      else if (zoneIndex === 4) chosenImg = pushupImg4;
+      else if (zoneIndex === 5) chosenImg = pushupImg5;
+      if (!chosenImg) return;
+
+      // On veut 3/4 de la hauteur de la zone
+      let effectiveHeight = height - uiMargin;
+      let zoneH = effectiveHeight / 5;
+      let desiredH = zoneH * 0.75; // 3/4
+      let ratio = desiredH / chosenImg.height;
+      let displayW = chosenImg.width * ratio;
+      let displayH = chosenImg.height * ratio;
+
+      // Position horizontale : le bout de la ligne (currentX-offsetX) + un offset
+      let xPos = (currentX - offsetX) + 30;
+
+      // Position verticale : currentY
+      let yPos = currentY;
+
+      // Si on est en zone 5, on s'assure que l'image ne sorte pas en bas
+      // => on limite la position de centre de l'image
+      let bottomLimit = height - displayH / 2;
+      if (zoneIndex === 5 && yPos > bottomLimit) {
+        yPos = bottomLimit;
+      }
+
+      imageMode(CENTER);
+      image(chosenImg, xPos, yPos, displayW, displayH);
+    }
+
+    /********************************************
+     ** 6) SETUP & RESIZE (p5.js)              **
+     ********************************************/
+    function setup() {
+      canvas = createCanvas(windowWidth, windowHeight);
+      canvas.position(0, 0);
+      canvas.style('z-index', '-1');
+      background(0);
+
+      setupRetroSound();
+      setupBackgroundMusic();
+
+      introStartTime = millis();
+      currentX = 0;
+      currentZone = 3;
+      currentY = zoneCenterY(currentZone);
+      linePoints.push({ x: currentX, y: currentY });
+      nextZoneTransitionTime = millis() + random(1000, 4000);
+
+      // Boutons
+      select('#startButton').mousePressed(startGame);
+      select('#stopButton').mousePressed(stopGame);
+      select('#restartButton').style('display', 'none');
+      select('#restartButton').mousePressed(restartGame);
+    }
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+    }
+
+    /********************************************
+     ** 7) BOUTONS : START, STOP, RESTART      **
+     ********************************************/
+    function startGame() {
+      if (!running && mode === "playing") {
+        gameStarted = true;
+        startTime = millis();
+        running = true;
+        startBackgroundMusic();
+        // On réinitialise le niveau de départ
+        prevLevel = 1;
+        levelPopupTimestamp = millis();
+        victorySoundPlayed = false;
+        happyEndingPlayed = false;
+      }
+    }
+    function stopGame() {
+      if (running && mode === "playing") {
+        elapsedTime += millis() - startTime;
+        running = false;
+        stopBackgroundMusic();
+      }
+    }
+    function restartGame() {
+      mode = "playing";
+      running = false;
+      startTime = 0;
+      elapsedTime = 0;
+      gameStarted = false;
+
+      currentX = 0;
+      currentY = zoneCenterY(3);
+      linePoints = [];
+      linePoints.push({ x: currentX, y: currentY });
+      currentZone = 3;
+
+      nextZoneTransitionTime = millis() + random(1000, 4000);
+      finalPopupBlinkCount = 0;
+      lastPopupCycleTime = 0;
+      finalPopupPermanent = false;
+
+      select('#restartButton').style('display', 'none');
+      select('#chrono').html("Temps: 0.0 sec");
+      select('#level').html("Niveau: <span style='color:white;'>1</span>");
+
+      stopBackgroundMusic();
+      victorySoundPlayed = false;
+      happyEndingPlayed = false;
+    }
+
+    /********************************************
+     ** 8) DRAW : la boucle de rendu p5.js     **
+     ********************************************/
+    function draw() {
+      // Écran blanc d'intro
+      if (showIntro) {
+        background(255);
+        textAlign(CENTER, CENTER);
+        textSize(50);
+        fill(0);
+        text("Push Up Odyssey", width / 2, height / 2);
+        if (millis() - introStartTime >= 2000) {
+          showIntro = false;
+        }
+        return;
+      }
+
+      if (mode === "playing") {
+        playMode();
+        drawZoneBoundaries();
+        drawZoneLabels();
+        drawLevelPopup();  
+        // Afficher l'image correspondant à la zone courante
+        drawPushupImageForZone(currentZone);
+      }
+      else if (mode === "transition") {
+        transitionMode();
+      }
+      else if (mode === "spiral") {
+        spiralMode();
+      }
+    }
+
+    /********************************************
+     ** 9) Jeu : playMode, transition, spiral  **
+     ********************************************/
+    function playMode() {
+      let totalTime = elapsedTime;
+      if (running) totalTime += millis() - startTime;
+
+      let level = floor(totalTime / levelInterval) + 1;
+      if (level > 7) level = 7;
+      currentColor = strokeColors[level - 1];
+
+      let seconds = (totalTime / 1000).toFixed(1);
+      select('#chrono').html("Temps: " + seconds + " sec");
+      select('#level').html("Niveau: <span style='font-weight:bold; background-color:white; padding:2px; color:" +
+                              currentColor + ";'>" + level + "</span>");
+
+      // Passage en mode transition (victoire) après 140 s
+      if (totalTime >= victoryTime) {
+        finalPointAtVictory = linePoints[linePoints.length - 1];
+        mode = "transition";
+        transitionStartTime = millis();
+        running = false;
+        stopBackgroundMusic();
+      } else {
+        background(0);
+        if (running) {
+          currentX += speedX;
+
+          // Est-ce qu’on lance un changement de destination ?
+          if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
+            nextZoneTransitionTime = 0;
+            let p = random(1);
+            let newZone = currentZone;
+
+            if (p < 0.4) {
+              newZone = currentZone;
+            } else if (p < 0.6) {
+              let candidates = [];
+              if (currentZone > 1) candidates.push(currentZone - 1);
+              if (currentZone < 5) candidates.push(currentZone + 1);
+              if (candidates.length > 0) newZone = random(candidates);
+            } else if (p < 0.8) {
+              let candidates = [];
+              if (currentZone - 2 >= 1) candidates.push(currentZone - 2);
+              if (currentZone + 2 <= 5) candidates.push(currentZone + 2);
+              if (candidates.length > 0) newZone = random(candidates);
+            } else {
+              // Changement extrême
+              if (currentZone === 1) newZone = 5;
+              else if (currentZone === 5) newZone = 1;
+              else if (currentZone === 2) newZone = 5;
+              else if (currentZone === 4) newZone = 1;
+              else if (currentZone === 3) newZone = random([1, 5]);
+            }
+
+            transitionInProgress = true;
+            zoneTransitionStartTime = millis();
+            oldY = currentY;
+            targetY = zoneCenterY(newZone);
+            targetZone = newZone;
+          }
+
+          if (transitionInProgress) {
+            let progress = (millis() - zoneTransitionStartTime) / zoneTransitionDuration;
+            progress = constrain(progress, 0, 1);
+            let newY = lerp(oldY, targetY, progress);
+
+            // On recalcule la zone en fonction de la position courante
+            let dynamicZone = getZoneFromY(newY);
+            currentZone = dynamicZone;
+
+            // Applique l'oscillation si on l'a activée
+            if (!oscillateMode) {
+              currentY = newY;
+            } else {
+              // On oscille autour de la position interpolée
+              let baseY = newY;
+              // On va faire une petite oscillation sinus autour de baseY
+              let amplitude = 10; // on peut ajuster
+              let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
+              currentY = baseY + oscillVal;
+            }
+
+            // Fin de transition ?
+            if (progress >= 1) {
+              transitionInProgress = false;
+              nextZoneTransitionTime = millis() + random(1000, 4000);
+              oscillateMode = (random(1) < 0.5);
+              if (oscillateMode) oscillationStartTime = millis();
+            }
+          } else {
+            // Pas de transitionInProgress => on reste dans la même zone,
+            // possiblement en oscillation
+            if (oscillateMode) {
+              let baseY = zoneCenterY(currentZone);
+              let amplitude = 10;
+              let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
+              currentY = baseY + oscillVal;
+            } else {
+              currentY = zoneCenterY(currentZone);
+            }
+          }
+
+          linePoints.push({ x: currentX, y: currentY });
+        }
+
+        offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
+        strokeWeight(4);
+        stroke(currentColor);
+        noFill();
+        beginShape();
+        for (let pt of linePoints) {
+          vertex(pt.x - offsetX, pt.y);
+        }
+        endShape();
+      }
+    }
+
+    function transitionMode() {
+      // On n’affiche plus l’image => la ligne est en mode transition drapeau
+      background(0);
+      strokeWeight(4);
+      stroke(currentColor);
+      noFill();
+      beginShape();
+      for (let pt of linePoints) {
+        vertex(pt.x - offsetX, pt.y);
+      }
+      endShape();
+
+      let elapsed = millis() - transitionStartTime;
+      let blinkCycle = floor(elapsed / flagBlinkCycleDuration);
+      if (blinkCycle < flagTargetBlink) {
+        if ((elapsed % flagBlinkCycleDuration) < flagDisplayDuration) {
+          textAlign(CENTER, CENTER);
+          textSize(40);
+          fill(255);
+          text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
+        }
+      } else {
+        // On affiche le drapeau en permanence
+        if (!victorySoundPlayed) {
+          playVictorySound();
+          victorySoundPlayed = true;
+        }
+        textAlign(CENTER, CENTER);
+        textSize(40);
+        fill(255);
+        text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
+
+        // Passage en mode "spiral"
+        mode = "spiral";
+        spiralStartTime = millis();
+        finalPopupBlinkCount = 0;
+        lastPopupCycleTime = millis();
+        finalPopupPermanent = false;
+      }
+      select('#chrono').html("NIVEAU 8 💪💪💪");
+      select('#level').html("");
+    }
+
+    function spiralMode() {
+      background(0);
+      let cx = width / 2, cy = height / 2;
+      let dt = millis() - spiralStartTime;
+      let p = constrain(dt / spiralDuration, 0, 1);
+      let numTurns = 6;
+      let thetaMax = numTurns * TWO_PI;
+      let currentTheta = p * thetaMax;
+      let rMax = dist(0, 0, width, height) / 2;
+      let k = rMax / thetaMax;
+
+      colorMode(HSB, 360, 100, 100);
+      strokeWeight(4);
+      noFill();
+      let step = 0.05;
+      let prevX = cx, prevY = cy;
+      for (let theta = 0; theta < currentTheta; theta += step) {
+        let r = k * theta;
+        let x = cx + r * cos(theta);
+        let y = cy + r * sin(theta);
+        let turnIndex = floor(theta / TWO_PI);
+        let hueVal = map(turnIndex, 0, numTurns, 0, 360);
+        stroke(hueVal, 100, 100);
+        line(prevX, prevY, x, y);
+        prevX = x;
+        prevY = y;
+      }
+      colorMode(RGB);
+
+      if (!happyEndingPlayed) {
+        playHappyEndingMelody();
+        happyEndingPlayed = true;
+      }
+      drawFinalPopup();
+    }
+
+    /********************************************
+     ** 9.1) Le POPUP de fin (dessin)          **
+     ********************************************/
+    function drawFinalPopup() {
+      let cycleDuration = popupCycleDuration;
+      let displayDuration = popupDisplayDuration;
+
+      if (!finalPopupPermanent) {
+        if (millis() - lastPopupCycleTime >= cycleDuration) {
+          lastPopupCycleTime = millis();
+          finalPopupBlinkCount++;
+        }
+        if (millis() - lastPopupCycleTime < displayDuration) {
+          drawPopup("💪💪💪");
+        }
+        if (finalPopupBlinkCount >= finalPopupTargetBlink) {
+          finalPopupPermanent = true;
+          drawPopup("💪💪💪");
+          select('#restartButton').style('display', 'block');
+          select('#restartButton').style('left', (width / 2 - 75) + 'px');
+          select('#restartButton').style('top', (height / 2 + 150) + 'px');
+        }
+      } else {
+        drawPopup("💪💪💪");
+      }
+    }
+    function drawPopup(msg) {
+      push();
+      rectMode(CENTER);
+      textAlign(CENTER, CENTER);
+      textSize(40);
+      noStroke();
+      fill(255);
+      let rectX = (width - popupW) / 2 + popupW / 2;
+      let rectY = (height - popupH) / 2 + popupH / 2;
+      rect(rectX, rectY, popupW, popupH, popupRadius);
+      fill(currentColor);
+      text(msg, rectX, rectY);
+      pop();
+    }
+
+    /********************************************
+     ** 9.2) drawLevelPopup(): gros chiffre    **
+     ********************************************/
+    function drawLevelPopup() {
+      // Ne rien afficher si le jeu n'a pas commencé
+      if (!gameStarted) return;
+
+      // Calcule le temps total
+      let totalTime = elapsedTime;
+      if (running) {
+        totalTime += millis() - startTime;
+      }
+
+      // Calcule le niveau en cours
+      let level = floor(totalTime / levelInterval) + 1;
+      if (level > 7) level = 7;
+
+      // Vérifie s'il y a un changement de niveau
+      if (level !== prevLevel) {
+        playRetroSound(); // petit son "retro"
+        levelPopupTimestamp = millis();
+        prevLevel = level;
+      }
+
+      // S'il y a moins d'1 seconde depuis le changement, on affiche un gros chiffre
+      if (millis() - levelPopupTimestamp < 1000) {
+        push();
+        textAlign(CENTER, CENTER);
+        textSize(100);
+
+        let displayText = level.toString();
+        let txtW = textWidth(displayText);
+        let padding = 20;
+        let rectW = txtW + 2 * padding;
+        let rectH = 100;
+
+        // On dessine le popup sur la droite (un peu excentré)
+        let rectX = width - 20 - rectW / 2;
+        let rectY = height / 2;
+
+        rectMode(CENTER);
+        noStroke();
+        fill(255);
+        rect(rectX, rectY, rectW, rectH, 15);
+
+        fill(currentColor);
+        text(displayText, rectX, rectY);
+        pop();
+      }
+    }
+
+    /********************************************
+     ** 10) Fonctions utilitaires (zones, etc.)**
+     ********************************************/
+    function zoneCenterY(z) {
+      let effectiveHeight = height - uiMargin;
+      let zoneHeight = effectiveHeight / 5;
+      // On fait un center classique
+      return uiMargin + (z - 0.5) * zoneHeight;
+    }
+    function zoneTopY(z) {
+      let effectiveHeight = height - uiMargin;
+      return uiMargin + (z - 1) * (effectiveHeight / 5);
+    }
+    function zoneBottomY(z) {
+      let effectiveHeight = height - uiMargin;
+      return uiMargin + z * (effectiveHeight / 5);
+    }
+
+    function drawZoneBoundaries() {
+      stroke(150);
+      strokeWeight(1);
+      let effectiveHeight = height - uiMargin;
+      let zoneHeight = effectiveHeight / 5;
+      for (let i = 0; i <= 5; i++) {
+        let y = uiMargin + i * zoneHeight;
+        drawDashedLine(0, y, width, y, 10, 5);
+      }
+    }
+    function drawDashedLine(x1, y1, x2, y2, dashLength, gapLength) {
+      let d = dist(x1, y1, x2, y2);
+      let dashCount = floor(d / (dashLength + gapLength));
+      let v = createVector(x2 - x1, y2 - y1).div(d);
+      for (let i = 0; i < dashCount; i++) {
+        let sx = x1 + v.x * i * (dashLength + gapLength);
+        let sy = y1 + v.y * i * (dashLength + gapLength);
+        let ex = sx + v.x * dashLength;
+        let ey = sy + v.y * dashLength;
+        line(sx, sy, ex, ey);
+      }
+    }
+    function drawZoneLabels() {
+      push();
+      textAlign(LEFT, CENTER);
+      textSize(12);
+      fill(150, 150);
+      text("tout en haut", 20, uiMargin + 8);
+      text("milieu", 20, zoneCenterY(3) - 8);
+      text("tout en bas", 20, height - 8);
+      pop();
+    }
+
+    /*********************************************
+     ** 11) Pas de service worker ni manifest   **
+     *********************************************/
+    // On retire toute référence au SW pour éviter les erreurs dans l'éditeur p5.
+
+  </script>
+</body>
+</html>
