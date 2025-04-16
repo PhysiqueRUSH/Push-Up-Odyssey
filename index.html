@@ -363,6 +363,7 @@
      ** 7) BOUTONS : START, STOP, RESTART      **
      ********************************************/
     function startGame() {
+      userStartAudio();
       if (!running && mode === "playing") {
         gameStarted = true;
         startTime = millis();
