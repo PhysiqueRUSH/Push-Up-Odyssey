@@ -623,4 +623,205 @@
           victorySoundPlayed = true;
         }
         textAlign(CENTER, CENTER);
- 
+textSize(40);
+        fill(255);
+        text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
+
+        // Passage en mode "spiral"
+        mode = "spiral";
+        spiralStartTime = millis();
+        finalPopupBlinkCount = 0;
+        lastPopupCycleTime = millis();
+        finalPopupPermanent = false;
+      }
+      select('#chrono').html("NIVEAU 8 💪💪💪");
+      select('#level').html("");
+    }
+
+    function spiralMode() {
+      background(0);
+      let cx = width / 2, cy = height / 2;
+      let dt = millis() - spiralStartTime;
+      let p = constrain(dt / spiralDuration, 0, 1);
+      let numTurns = 6;
+      let thetaMax = numTurns * TWO_PI;
+      let currentTheta = p * thetaMax;
+      let rMax = dist(0, 0, width, height) / 2;
+      let k = rMax / thetaMax;
+
+      colorMode(HSB, 360, 100, 100);
+      strokeWeight(4);
+      noFill();
+      let step = 0.05;
+      let prevX = cx, prevY = cy;
+      for (let theta = 0; theta < currentTheta; theta += step) {
+        let r = k * theta;
+        let x = cx + r * cos(theta);
+        let y = cy + r * sin(theta);
+        let turnIndex = floor(theta / TWO_PI);
+        let hueVal = map(turnIndex, 0, numTurns, 0, 360);
+        stroke(hueVal, 100, 100);
+        line(prevX, prevY, x, y);
+        prevX = x;
+        prevY = y;
+      }
+      colorMode(RGB);
+
+      if (!happyEndingPlayed) {
+        playHappyEndingMelody();
+        happyEndingPlayed = true;
+      }
+      drawFinalPopup(); 
+    }
+
+    /********************************************
+     ** 9.1) Le POPUP de fin (dessin)          **
+     ********************************************/
+    function drawFinalPopup() {
+      // On garde le cycle de clignotement, mais on ne dessine plus le rectangle blanc ni "💪💪💪"
+      // À la place, on dessine victory.png, collé en bas, centré horizontalement.
+      let cycleDuration = popupCycleDuration;
+      let displayDuration = popupDisplayDuration;
+
+      if (!finalPopupPermanent) {
+        if (millis() - lastPopupCycleTime >= cycleDuration) {
+          lastPopupCycleTime = millis();
+          finalPopupBlinkCount++;
+        }
+        if (millis() - lastPopupCycleTime < displayDuration) {
+          drawVictoryImage();
+        }
+        if (finalPopupBlinkCount >= finalPopupTargetBlink) {
+          finalPopupPermanent = true;
+          drawVictoryImage();
+          select('#restartButton').style('display', 'block');
+          select('#restartButton').style('left', (width / 2 - 75) + 'px');
+          select('#restartButton').style('top', (height / 2 + 150) + 'px');
+        }
+      } else {
+        drawVictoryImage();
+      }
+    }
+
+    function drawVictoryImage() {
+      // On veut un grand ratio (ex: 80% de la hauteur)
+      let desiredH = height * 0.8;
+      let ratio = desiredH / victoryImg.height;
+      let displayW = victoryImg.width * ratio;
+      let displayH = victoryImg.height * ratio;
+
+      // Bas collé à l'écran => y = height - displayH/2
+      let xPos = width / 2;
+      let yPos = height - displayH / 2;
+
+      imageMode(CENTER);
+      image(victoryImg, xPos, yPos, displayW, displayH);
+    }
+
+    /********************************************
+     ** 9.2) drawLevelPopup(): gros chiffre    **
+     ********************************************/
+    function drawLevelPopup() {
+      if (!gameStarted) return;
+      let totalTime = elapsedTime;
+      if (running) {
+        totalTime += millis() - startTime;
+      }
+      let level = floor(totalTime / levelInterval) + 1;
+      if (level > 7) level = 7;
+      if (level !== prevLevel) {
+        playRetroSound();
+        levelPopupTimestamp = millis();
+        prevLevel = level;
+      }
+      if (millis() - levelPopupTimestamp < 1000) {
+        push();
+        textAlign(CENTER, CENTER);
+        textSize(100);
+
+        let displayText = level.toString();
+        let txtW = textWidth(displayText);
+        let padding = 20;
+        let rectW = txtW + 2 * padding;
+        let rectH = 100;
+
+        let rectX = width - 20 - rectW / 2;
+        let rectY = height / 2;
+
+        rectMode(CENTER);
+        noStroke();
+        fill(255);
+        rect(rectX, rectY, rectW, rectH, 15);
+
+        fill(currentColor);
+        text(displayText, rectX, rectY);
+        pop();
+      }
+    }
+
+    /********************************************
+     ** 10) Fonctions utilitaires (zones, etc.)**
+     ********************************************/
+    function zoneCenterY(z) {
+      let effectiveHeight = height - uiMargin;
+      let zoneHeight = effectiveHeight / 5;
+      return uiMargin + (z - 0.5) * zoneHeight;
+    }
+    function zoneTopY(z) {
+      let effectiveHeight = height - uiMargin;
+      return uiMargin + (z - 1) * (effectiveHeight / 5);
+    }
+    function zoneBottomY(z) {
+      let effectiveHeight = height - uiMargin;
+      return uiMargin + z * (effectiveHeight / 5);
+    }
+
+    function drawZoneBoundaries() {
+      stroke(150);
+      strokeWeight(1);
+      let effectiveHeight = height - uiMargin;
+      let zoneHeight = effectiveHeight / 5;
+      for (let i = 0; i <= 5; i++) {
+        let y = uiMargin + i * zoneHeight;
+        drawDashedLine(0, y, width, y, 10, 5);
+      }
+    }
+    function drawDashedLine(x1, y1, x2, y2, dashLength, gapLength) {
+      let d = dist(x1, y1, x2, y2);
+      let dashCount = floor(d / (dashLength + gapLength));
+      let v = createVector(x2 - x1, y2 - y1).div(d);
+      for (let i = 0; i < dashCount; i++) {
+        let sx = x1 + v.x * i * (dashLength + gapLength);
+        let sy = y1 + v.y * i * (dashLength + gapLength);
+        let ex = sx + v.x * dashLength;
+        let ey = sy + v.y * dashLength;
+        line(sx, sy, ex, ey);
+      }
+    }
+    function drawZoneLabels() {
+      push();
+      textAlign(LEFT, CENTER);
+      textSize(12);
+      fill(150, 150);
+      text("tout en haut", 20, uiMargin + 8);
+      text("milieu", 20, zoneCenterY(3) - 8);
+      text("tout en bas", 20, height - 8);
+      pop();
+    }
+
+    /*********************************************
+     ** 11) Réenregistrement du Service Worker  **
+     *********************************************/
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('ServiceWorker enregistré avec succès:', registration.scope);
+        }, function(err) {
+          console.log('Enregistrement ServiceWorker échoué:', err);
+        });
+      });
+    }
+
+  </script>
+</body>
+</html>
