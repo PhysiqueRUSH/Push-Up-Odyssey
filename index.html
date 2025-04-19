@@ -219,6 +219,10 @@
      ** 3) VARIABLES & ÉTATS DU JEU (global)   **
      ********************************************/
     let mode = "playing"; // ou "transition", "spiral"
+    // ——— Countdown 5 s avant le start ———
+const countdownDuration = 5000;  // durée du compte à rebours en millisecondes
+let countdownActive     = false; // true pendant le compte à rebours
+let countdownStartTime  = 0;     // timestamp de début du compte à rebours
     let running = false;
     let startTime = 0;
     let elapsedTime = 0;
@@ -388,23 +392,30 @@
     /********************************************
      ** 7) BOUTONS : START, STOP, RESTART      **
      ********************************************/
-    function startGame() {
-      userStartAudio();  // Débloque l'audio sur mobile
+   function startGame() {
+  userStartAudio();  // débloque l'audio sur mobile
 
-      if (!running && mode === "playing") {
-        // On relance le jeu => on cache l'image échec
-        echecActive = false;
+  // 1er clic : on lance le compte à rebours au lieu de démarrer direct
+  if (!gameStarted) {
+    countdownActive    = true;
+    countdownStartTime = millis();
+    gameStarted        = true;  // marque le début (même si on n'est pas encore running)
+    return;
+  }
 
-        gameStarted = true;
-        startTime = millis();
-        running = true;
-        startBackgroundMusic();
-        prevLevel = 1;
-        levelPopupTimestamp = millis();
-        victorySoundPlayed = false;
-        happyEndingPlayed = false;
-      }
-    }
+  // clics suivants (après le countdown) : lancement normal du jeu
+  if (!running && mode === "playing") {
+    echecActive = false;
+    running     = true;
+    startTime   = millis();
+    startBackgroundMusic();
+    prevLevel   = 1;
+    levelPopupTimestamp = millis();
+    victorySoundPlayed  = false;
+    happyEndingPlayed   = false;
+  }
+}
+
     function stopGame() {
       // Si on est en mode playing et qu'on est en train de courir
       if (running && mode === "playing") {
@@ -466,7 +477,26 @@
         }
         return;
       }
+  // —— Affichage et gestion du compte à rebours 5 s ——
+  if (countdownActive) {
+    background(0);
+    textAlign(CENTER, CENTER);
+    textSize(100);
+    fill(255);
+    // calcule les secondes restantes (5→1) ou affiche "GO!"
+    let elapsed     = millis() - countdownStartTime;
+    let secondsLeft = 5 - floor(elapsed / 1000);
+    text(secondsLeft > 0 ? secondsLeft : "GO!", width/2, height/2);
 
+    // Une fois les 5 s écoulées, on bascule en running
+    if (elapsed >= countdownDuration) {
+      countdownActive = false;
+      running         = true;
+      startTime       = millis();
+      startBackgroundMusic();
+    }
+    return;  // on ne poursuit pas le reste du draw tant que le countdown est actif
+  }
       if (mode === "playing") {
         playMode();
         drawZoneBoundaries();
