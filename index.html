@@ -223,7 +223,7 @@
 const countdownDuration = 5000;  // durée du compte à rebours en millisecondes
 let countdownActive     = false; // true pendant le compte à rebours
 let countdownStartTime  = 0;     // timestamp de début du compte à rebours
-    let  = false;
+    let running = false;
     let startTime = 0;
     let elapsedTime = 0;
     let gameStarted = false;
@@ -239,17 +239,20 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
     let speedX = 0.3;
     let offsetX = 0;
     let nextZoneTransitionTime = 0;
+    let transitionInProgress = false;
+    let zoneTransitionStartTime = 0;
+    const zoneTransitionDuration = 1500;
+    let oldY = 0;
+    let targetY = 0;
+    let targetZone = 3;
+    let oscillateMode = false;
+    let oscillationStartTime = 0;
+    const oscillationPeriod = 3000;
 
-   // Durées progressives pour niveaux 1→7, spirale (niveau 8) à 180 s
-let levelDurations = [10000, 15000, 20000, 25000, 30000, 35000, 45000];
-let cumulative = [0];
-for (let d of levelDurations) {
-  cumulative.push(cumulative[cumulative.length - 1] + d);
-}
-const victoryTime = cumulative[7];  // 180000 ms
- 
+    const levelInterval = 20000;
     const strokeColors = ["#8A2BE2", "#4B0082", "#0000FF", "#008000", "#FFFF00", "#FFA500", "#FF0000"];
     let currentColor = strokeColors[0];
+    const victoryTime = 140000;
     const spiralDuration = 5000;
     const flagBlinkCycleDuration = 500;
     const flagDisplayDuration = 250;
@@ -304,7 +307,7 @@ const victoryTime = cumulative[7];  // 180000 ms
      ** 5) Afficher l'image pushup selon zone  **
      ********************************************/
     function drawPushupImageForZone(zoneIndex) {
-      if (mode !== "playing" || !) return;
+      if (mode !== "playing" || !running) return;
 
       let chosenImg = null;
       if (zoneIndex === 1) chosenImg = pushupImg1;
@@ -396,14 +399,14 @@ const victoryTime = cumulative[7];  // 180000 ms
   if (!gameStarted) {
     countdownActive    = true;
     countdownStartTime = millis();
-    gameStarted        = true;  // marque le début (même si on n'est pas encore )
+    gameStarted        = true;  // marque le début (même si on n'est pas encore running)
     return;
   }
 
   // clics suivants (après le countdown) : lancement normal du jeu
-  if (! && mode === "playing") {
+  if (!running && mode === "playing") {
     echecActive = false;
-         = true;
+    running     = true;
     startTime   = millis();
     startBackgroundMusic();
     prevLevel   = 1;
@@ -415,9 +418,9 @@ const victoryTime = cumulative[7];  // 180000 ms
 
     function stopGame() {
       // Si on est en mode playing et qu'on est en train de courir
-      if ( && mode === "playing") {
+      if (running && mode === "playing") {
         elapsedTime += millis() - startTime;
-         = false;
+        running = false;
         stopBackgroundMusic();
 
         // Active l'image échec
@@ -430,7 +433,7 @@ const victoryTime = cumulative[7];  // 180000 ms
     }
     function restartGame() {
       mode = "playing";
-       = false;
+      running = false;
       startTime = 0;
       elapsedTime = 0;
       gameStarted = false;
@@ -485,10 +488,10 @@ const victoryTime = cumulative[7];  // 180000 ms
     let secondsLeft = 5 - floor(elapsed / 1000);
     text(secondsLeft > 0 ? secondsLeft : "GO!", width/2, height/2);
 
-    // Une fois les 5 s écoulées, on bascule en 
+    // Une fois les 5 s écoulées, on bascule en running
     if (elapsed >= countdownDuration) {
       countdownActive = false;
-               = true;
+      running         = true;
       startTime       = millis();
       startBackgroundMusic();
     }
@@ -514,83 +517,117 @@ const victoryTime = cumulative[7];  // 180000 ms
     /********************************************
      ** 9) Jeu : playMode, transition, spiral  **
      ********************************************/
-function playMode() {
-  // 1) Calcul du temps total
-  let totalTime = elapsedTime + (running ? millis() - startTime : 0);
+    function playMode() {
+      let totalTime = elapsedTime;
+      if (running) totalTime += millis() - startTime;
 
-  // 2) Calcul du niveau 1→8
-  let level = 1;
-  for (let i = 1; i <= 7; i++) {
-    if (totalTime >= cumulative[i]) level = i + 1;
-  }
-  level = min(level, 8);
+      let level = floor(totalTime / levelInterval) + 1;
+      if (level > 7) level = 7;
+      currentColor = strokeColors[level - 1];
 
-  // 3) Mise à jour chrono et niveau
-  select('#chrono').html("Temps: " + (totalTime / 1000).toFixed(1) + " sec");
-  select('#level').html("Niveau: <span style='color:white;'>" + level + "</span>");
+      let seconds = (totalTime / 1000).toFixed(1);
+      select('#chrono').html("Temps: " + seconds + " sec");
+      select('#level').html("Niveau: <span style='font-weight:bold; background-color:white; padding:2px; color:" +
+                              currentColor + ";'>" + level + "</span>");
 
-  // 4) Passage en transition (victoire)
-  if (totalTime >= victoryTime) {
-    mode = 'transition';
-    return;
-  }
-
-  // 5) Si le jeu tourne, on met à jour la position et la zone
-  if (running) {
-    currentX += speedX;
-
-    // 5a) Changement de zone net
-    if (millis() >= nextZoneTransitionTime) {
-      let baseSame = 0.4;
-      if (currentZone === 1 || currentZone === 5) {
-        baseSame = Math.max(0.1, baseSame - (level - 1) * 0.04);
-      }
-      let p = random(), newZone = currentZone;
-      if (p < baseSame) {
-        newZone = currentZone;
-      } else if (p < baseSame + 0.2) {
-        newZone = constrain(currentZone + random([-1, 1]), 1, 5);
-      } else if (p < baseSame + 0.4) {
-        newZone = constrain(currentZone + random([-2, 2]), 1, 5);
+      // Passage en mode transition (victoire) après 140 s
+      if (totalTime >= victoryTime) {
+        finalPointAtVictory = linePoints[linePoints.length - 1];
+        mode = "transition";
+        transitionStartTime = millis();
+        running = false;
+        stopBackgroundMusic();
       } else {
-        newZone = (currentZone === 1 ? 5 : currentZone === 5 ? 1 : random([1, 5]));
-      }
+        background(0);
+        if (running) {
+          currentX += speedX;
 
-      currentZone = newZone;
-      currentY = zoneCenterY(currentZone);
-      tTime = (random() < 0.5) ? millis() : 0;
-      nextZoneTransitionTime = millis() + random(3000, 6000);
-      linePoints.push({ x: currentX, y: currentY });
+          if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
+            nextZoneTransitionTime = 0;
+            let p = random(1);
+            let newZone = currentZone;
 
-    } else {
-      // 5b) Entre deux transitions : oscillation large ou ligne fixe
-      if (tTime) {
-        let amp = (height - uiMargin) / 5 * 0.5;
-        currentY = zoneCenterY(currentZone)
-                 + amp * sin(TWO_PI * (millis() - tTime) / 2000);
-      } else {
-        currentY = zoneCenterY(currentZone);
+            if (p < 0.4) {
+              newZone = currentZone;
+            } else if (p < 0.6) {
+              let candidates = [];
+              if (currentZone > 1) candidates.push(currentZone - 1);
+              if (currentZone < 5) candidates.push(currentZone + 1);
+              if (candidates.length > 0) newZone = random(candidates);
+            } else if (p < 0.8) {
+              let candidates = [];
+              if (currentZone - 2 >= 1) candidates.push(currentZone - 2);
+              if (currentZone + 2 <= 5) candidates.push(currentZone + 2);
+              if (candidates.length > 0) newZone = random(candidates);
+            } else {
+              // Changement extrême
+              if (currentZone === 1) newZone = 5;
+              else if (currentZone === 5) newZone = 1;
+              else if (currentZone === 2) newZone = 5;
+              else if (currentZone === 4) newZone = 1;
+              else if (currentZone === 3) newZone = random([1, 5]);
+            }
+
+            transitionInProgress = true;
+            zoneTransitionStartTime = millis();
+            oldY = currentY;
+            targetY = zoneCenterY(newZone);
+            targetZone = newZone;
+          }
+
+          if (transitionInProgress) {
+            let progress = (millis() - zoneTransitionStartTime) / zoneTransitionDuration;
+            progress = constrain(progress, 0, 1);
+            let newY = lerp(oldY, targetY, progress);
+
+            // On recalcule la zone en fonction de la position courante
+            let dynamicZone = getZoneFromY(newY);
+            currentZone = dynamicZone;
+
+            if (!oscillateMode) {
+              currentY = newY;
+            } else {
+              let baseY = newY;
+              let amplitude = 10;
+              let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
+              currentY = baseY + oscillVal;
+            }
+
+            if (progress >= 1) {
+              transitionInProgress = false;
+              nextZoneTransitionTime = millis() + random(1000, 4000);
+              oscillateMode = (random(1) < 0.5);
+              if (oscillateMode) oscillationStartTime = millis();
+            }
+          } else {
+            // Pas de transition => zone stable
+            if (oscillateMode) {
+              let baseY = zoneCenterY(currentZone);
+              let amplitude = 10;
+              let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
+              currentY = baseY + oscillVal;
+            } else {
+              currentY = zoneCenterY(currentZone);
+            }
+          }
+
+          linePoints.push({ x: currentX, y: currentY });
+        }
+
+        offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
+        strokeWeight(4);
+        stroke(currentColor);
+        noFill();
+        beginShape();
+        for (let pt of linePoints) {
+          vertex(pt.x - offsetX, pt.y);
+        }
+        endShape();
       }
-      linePoints.push({ x: currentX, y: currentY });
     }
-  }
-
-  // 6) Dessin de la ligne
-  let offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
-  strokeWeight(4);
-  stroke(currentColor);
-  noFill();
-  beginShape();
-  for (let pt of linePoints) {
-    vertex(pt.x - offsetX, pt.y);
-  }
-  endShape();
-
-  // 7) Si échec, afficher l’image
-  if (echecActive) drawEchecImage();
-}
 
     function transitionMode() {
+      background(0);
       strokeWeight(4);
       stroke(currentColor);
       noFill();
@@ -605,7 +642,7 @@ function playMode() {
       if (blinkCycle < flagTargetBlink) {
         if ((elapsed % flagBlinkCycleDuration) < flagDisplayDuration) {
           textAlign(CENTER, CENTER);
-          textSize(80);
+          textSize(40);
           fill(255);
           text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
         }
@@ -616,7 +653,7 @@ function playMode() {
           victorySoundPlayed = true;
         }
         textAlign(CENTER, CENTER);
-        textSize(80);
+        textSize(40);
         fill(255);
         text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
 
@@ -717,7 +754,7 @@ function playMode() {
     function drawLevelPopup() {
       if (!gameStarted) return;
       let totalTime = elapsedTime;
-      if () {
+      if (running) {
         totalTime += millis() - startTime;
       }
       let level = floor(totalTime / levelInterval) + 1;
