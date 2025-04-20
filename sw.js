@@ -1,6 +1,5 @@
 // Incrémente la version du cache pour forcer la mise à jour
-const CACHE_NAME = 'push-up-odyssey-cache-v17';
-const VERSION = 'v17';
+const CACHE_NAME = 'push-up-odyssey-cache-v16';
 
 // Liste de tous les fichiers qu’on veut précacher
 const urlsToCache = [
@@ -52,11 +51,4 @@ self.addEventListener('fetch', event => {
       return response || fetch(event.request);
     })
   );
-});
-
-// Permet à index.html de demander la version du cache
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'GET_VERSION') {
-    event.source.postMessage({ type: 'VERSION', version: VERSION });
-  }
 });
