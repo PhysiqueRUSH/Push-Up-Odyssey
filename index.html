@@ -378,21 +378,7 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
       currentY = zoneCenterY(currentZone);
       linePoints.push({ x: currentX, y: currentY });
       nextZoneTransitionTime = millis() + random(1000, 4000);
-  // Demande la version au service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(registration => {
-      if (registration.active) {
-        registration.active.postMessage({ type: 'GET_VERSION' });
 
-        navigator.serviceWorker.addEventListener('message', event => {
-          if (event.data && event.data.type === 'VERSION') {
-            gameVersion = event.data.version;
-          }
-        });
-      }
-    });
-  }
-      
       // Boutons
       select('#startButton').mousePressed(startGame);
       select('#stopButton').mousePressed(stopGame);
@@ -480,39 +466,17 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
      ********************************************/
     function draw() {
       // Écran blanc d'intro
-      let gameVersion = ''; // initialement vide
-
-// On demande la version au Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.ready.then(registration => {
-    registration.active.postMessage({ type: 'GET_VERSION' });
-  });
-
-  navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data.type === 'VERSION') {
-      gameVersion = event.data.version; // reçoit 'v16' automatiquement
-    }
-  });
-}
-
-if (showIntro) {
-  background(255);
-  textAlign(CENTER, CENTER);
-  textSize(50);
-  fill(0);
-  text("Push Up Odyssey", width / 2, height / 2);
-
-  // Affichage automatique (reste vide quelques millisecondes si version pas encore reçue)
-  textSize(14);
-  fill(0);
-  text("Version " + gameVersion, width / 2, height - 20);
-
-  if (millis() - introStartTime >= 2000) {
-    showIntro = false;
-  }
-  return;
-}
-
+      if (showIntro) {
+        background(255);
+        textAlign(CENTER, CENTER);
+        textSize(50);
+        fill(0);
+        text("Push Up Odyssey", width / 2, height / 2);
+        if (millis() - introStartTime >= 2000) {
+          showIntro = false;
+        }
+        return;
+      }
   // —— Affichage et gestion du compte à rebours 5 s ——
   if (countdownActive) {
     background(0);
@@ -647,7 +611,7 @@ if (showIntro) {
             }
           }
 
-          linePoints.push({ x: currentX, y: currentY });
+         linePoints.push({ x: currentX, y: currentY });
         }
 
         offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
@@ -663,6 +627,7 @@ if (showIntro) {
     }
 
     function transitionMode() {
+      background(0);
       strokeWeight(4);
       stroke(currentColor);
       noFill();
@@ -677,9 +642,9 @@ if (showIntro) {
       if (blinkCycle < flagTargetBlink) {
         if ((elapsed % flagBlinkCycleDuration) < flagDisplayDuration) {
           textAlign(CENTER, CENTER);
-          textSize(80);
+          textSize(40);
           fill(255);
-          text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
+          text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
         }
       } else {
         // On affiche le drapeau en permanence
@@ -688,9 +653,9 @@ if (showIntro) {
           victorySoundPlayed = true;
         }
         textAlign(CENTER, CENTER);
-        textSize(80);
+        textSize(40);
         fill(255);
-        text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
+        text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
 
         // Passage en mode "spiral"
         mode = "spiral";
@@ -787,7 +752,7 @@ if (showIntro) {
      ** 9.2) drawLevelPopup(): gros chiffre    **
      ********************************************/
     function drawLevelPopup() {
-      if (!gameStarted || mode !== "playing") return;
+      if (!gameStarted) return;
       let totalTime = elapsedTime;
       if (running) {
         totalTime += millis() - startTime;
