@@ -466,17 +466,39 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
      ********************************************/
     function draw() {
       // Écran blanc d'intro
-      if (showIntro) {
-        background(255);
-        textAlign(CENTER, CENTER);
-        textSize(50);
-        fill(0);
-        text("Push Up Odyssey", width / 2, height / 2);
-        if (millis() - introStartTime >= 2000) {
-          showIntro = false;
-        }
-        return;
-      }
+      let gameVersion = ''; // initialement vide
+
+// On demande la version au Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then(registration => {
+    registration.active.postMessage({ type: 'GET_VERSION' });
+  });
+
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data.type === 'VERSION') {
+      gameVersion = event.data.version; // reçoit 'v16' automatiquement
+    }
+  });
+}
+
+if (showIntro) {
+  background(255);
+  textAlign(CENTER, CENTER);
+  textSize(50);
+  fill(0);
+  text("Push Up Odyssey", width / 2, height / 2);
+
+  // Affichage automatique (reste vide quelques millisecondes si version pas encore reçue)
+  textSize(14);
+  fill(0);
+  text("Version " + gameVersion, width / 2, height - 20);
+
+  if (millis() - introStartTime >= 2000) {
+    showIntro = false;
+  }
+  return;
+}
+
   // —— Affichage et gestion du compte à rebours 5 s ——
   if (countdownActive) {
     background(0);
