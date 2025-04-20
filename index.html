@@ -627,7 +627,6 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
     }
 
     function transitionMode() {
-      background(0);
       strokeWeight(4);
       stroke(currentColor);
       noFill();
@@ -642,7 +641,7 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
       if (blinkCycle < flagTargetBlink) {
         if ((elapsed % flagBlinkCycleDuration) < flagDisplayDuration) {
           textAlign(CENTER, CENTER);
-          textSize(40);
+          textSize(80);
           fill(255);
           text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
         }
@@ -653,7 +652,7 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
           victorySoundPlayed = true;
         }
         textAlign(CENTER, CENTER);
-        textSize(40);
+        textSize(80);
         fill(255);
         text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
 
