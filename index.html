@@ -484,7 +484,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v2.1", width / 2, height - 30); // centré, partie basse
+    text("v2.2", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
@@ -536,9 +536,21 @@ if (countdownActive) {
       let totalTime = elapsedTime;
       if (running) totalTime += millis() - startTime;
 
-      let level = floor(totalTime / levelInterval) + 1;
-      if (level > 7) level = 7;
-      currentColor = strokeColors[level - 1];
+/* ------ Calcul progressif du niveau ------ */
+let level = 7;              // par défaut (temps ≥ somme)
+let cumulative = 0;
+for (let i = 0; i < levelDurations.length; i++) {
+  cumulative += levelDurations[i];
+  if (totalTime < cumulative) {
+    level = i + 1;          // niveaux 1 → 7
+    break;
+  }
+}
+currentColor = strokeColors[level - 1];
+/* ----------------------------------------- */
+
+// Passage en mode transition (victoire) après 180 s
+
 
       let seconds = (totalTime / 1000).toFixed(1);
       select('#chrono').html("Temps: " + seconds + " sec");
@@ -763,46 +775,57 @@ if (countdownActive) {
       image(victoryImg, xPos, yPos, displayW, displayH);
     }
 
-    /********************************************
-     ** 9.2) drawLevelPopup(): gros chiffre    **
-     ********************************************/
-    function drawLevelPopup() {
-      if (!gameStarted) return;
-      let totalTime = elapsedTime;
-      if (running) {
-        totalTime += millis() - startTime;
-      }
-      let level = floor(totalTime / levelInterval) + 1;
-      if (level > 7) level = 7;
-      if (level !== prevLevel) {
-        playRetroSound();
-        levelPopupTimestamp = millis();
-        prevLevel = level;
-      }
-      if (millis() - levelPopupTimestamp < 1000) {
-        push();
-        textAlign(CENTER, CENTER);
-        textSize(100);
+/********************************************
+ ** 9.2) drawLevelPopup(): gros chiffre    **
+ ********************************************/
+function drawLevelPopup() {
+  if (!gameStarted) return;
 
-        let displayText = level.toString();
-        let txtW = textWidth(displayText);
-        let padding = 20;
-        let rectW = txtW + 2 * padding;
-        let rectH = 100;
+  let totalTime = elapsedTime;
+  if (running) totalTime += millis() - startTime;
 
-        let rectX = width - 20 - rectW / 2;
-        let rectY = height / 2;
-
-        rectMode(CENTER);
-        noStroke();
-        fill(255);
-        rect(rectX, rectY, rectW, rectH, 15);
-
-        fill(currentColor);
-        text(displayText, rectX, rectY);
-        pop();
-      }
+  /* ------ Calcul progressif du niveau ------ */
+  let level = 7;
+  let cumulative = 0;
+  for (let i = 0; i < levelDurations.length; i++) {
+    cumulative += levelDurations[i];
+    if (totalTime < cumulative) {
+      level = i + 1;
+      break;
     }
+  }
+  /* ----------------------------------------- */
+
+  if (level !== prevLevel) {
+    playRetroSound();
+    levelPopupTimestamp = millis();
+    prevLevel = level;
+  }
+  if (millis() - levelPopupTimestamp < 1000) {
+    push();
+    textAlign(CENTER, CENTER);
+    textSize(100);
+
+    let displayText = level.toString();
+    let txtW = textWidth(displayText);
+    let padding = 20;
+    let rectW = txtW + 2 * padding;
+    let rectH = 100;
+
+    let rectX = width - 20 - rectW / 2;
+    let rectY = height / 2;
+
+    rectMode(CENTER);
+    noStroke();
+    fill(255);
+    rect(rectX, rectY, rectW, rectH, 15);
+
+    fill(currentColor);
+    text(displayText, rectX, rectY);
+    pop();
+  }
+}
+
 
     /********************************************
      ** 10) Fonctions utilitaires (zones, etc.)**
