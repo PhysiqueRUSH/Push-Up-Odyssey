@@ -472,6 +472,12 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
         textSize(50);
         fill(0);
         text("Push Up Odyssey", width / 2, height / 2);
+
+  // Version affichée automatiquement
+  textSize(14);
+  fill(0);
+  text("Version 18" + gameVersion, width / 2, height - 20);
+        
         if (millis() - introStartTime >= 2000) {
           showIntro = false;
         }
