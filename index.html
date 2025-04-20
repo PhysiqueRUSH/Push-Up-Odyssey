@@ -378,7 +378,21 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
       currentY = zoneCenterY(currentZone);
       linePoints.push({ x: currentX, y: currentY });
       nextZoneTransitionTime = millis() + random(1000, 4000);
+  // Demande la version au service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+      if (registration.active) {
+        registration.active.postMessage({ type: 'GET_VERSION' });
 
+        navigator.serviceWorker.addEventListener('message', event => {
+          if (event.data && event.data.type === 'VERSION') {
+            gameVersion = event.data.version;
+          }
+        });
+      }
+    });
+  }
+      
       // Boutons
       select('#startButton').mousePressed(startGame);
       select('#stopButton').mousePressed(stopGame);
