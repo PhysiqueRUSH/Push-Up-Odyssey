@@ -461,58 +461,67 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
       happyEndingPlayed = false;
     }
 
-    /********************************************
-     ** 8) DRAW : la boucle de rendu p5.js     **
-     ********************************************/
-    function draw() {
-      // Écran blanc d'intro
-      if (showIntro) {
-        background(255);
-        textAlign(CENTER, CENTER);
-        textSize(50);
-        fill(0);
-        text("Push Up Odyssey", width / 2, height / 2);
-        if (millis() - introStartTime >= 2000) {
-          showIntro = false;
-        }
-        return;
-      }
-  // —— Affichage et gestion du compte à rebours 5 s ——
-  if (countdownActive) {
-    background(0);
+/********************************************
+ ** 8) DRAW : la boucle de rendu p5.js     **
+ ********************************************/
+function draw() {
+  // Écran blanc d'intro
+  if (showIntro) {
+    background(255);
     textAlign(CENTER, CENTER);
-    textSize(100);
-    fill(255);
-    // calcule les secondes restantes (5→1) ou affiche "GO!"
-    let elapsed     = millis() - countdownStartTime;
-    let secondsLeft = 5 - floor(elapsed / 1000);
-    text(secondsLeft > 0 ? secondsLeft : "GO!", width/2, height/2);
 
-    // Une fois les 5 s écoulées, on bascule en running
-    if (elapsed >= countdownDuration) {
-      countdownActive = false;
-      running         = true;
-      startTime       = millis();
-      startBackgroundMusic();
+    // Titre principal
+    textSize(50);
+    fill(0);
+    text("Push Up Odyssey", width / 2, height / 2);
+
+    /* ---------- Numéro de version ---------- */
+    textSize(16);        // petit
+    fill(0, 0, 255);     // bleu
+    text("v2.0", width / 2, height - 30); // centré, partie basse
+    /* --------------------------------------- */
+
+    if (millis() - introStartTime >= 2000) {
+      showIntro = false;
     }
-    return;  // on ne poursuit pas le reste du draw tant que le countdown est actif
+    return;
   }
-      if (mode === "playing") {
-        playMode();
-        drawZoneBoundaries();
-        drawZoneLabels();
-        drawLevelPopup();  
-        drawPushupImageForZone(currentZone);
-        // Dessine l'image "échec" si active
-        drawEchecImage();
-      }
-      else if (mode === "transition") {
-        transitionMode();
-      }
-      else if (mode === "spiral") {
-        spiralMode();
-      }
-    }
+// —— Affichage et gestion du compte à rebours 5 s ——
+if (countdownActive) {
+  background(0);
+  textAlign(CENTER, CENTER);
+  textSize(100);
+  fill(255);
+  // calcule les secondes restantes (5→1) ou affiche "GO!"
+  let elapsed     = millis() - countdownStartTime;
+  let secondsLeft = 5 - floor(elapsed / 1000);
+  text(secondsLeft > 0 ? secondsLeft : "GO!", width/2, height/2);
+
+  // Une fois les 5 s écoulées, on bascule en running
+  if (elapsed >= countdownDuration) {
+    countdownActive = false;
+    running         = true;
+    startTime       = millis();
+    startBackgroundMusic();
+  }
+  return;  // on ne poursuit pas le reste du draw tant que le countdown est actif
+}
+  if (mode === "playing") {
+    playMode();
+    drawZoneBoundaries();
+    drawZoneLabels();
+    drawLevelPopup();  
+    drawPushupImageForZone(currentZone);
+    // Dessine l'image "échec" si active
+    drawEchecImage();
+  }
+  else if (mode === "transition") {
+    transitionMode();
+  }
+  else if (mode === "spiral") {
+    spiralMode();
+  }
+}
 
     /********************************************
      ** 9) Jeu : playMode, transition, spiral  **
