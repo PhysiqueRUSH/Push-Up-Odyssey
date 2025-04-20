@@ -643,7 +643,7 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
           textAlign(CENTER, CENTER);
           textSize(80);
           fill(255);
-          text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
+          text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
         }
       } else {
         // On affiche le drapeau en permanence
@@ -654,7 +654,7 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
         textAlign(CENTER, CENTER);
         textSize(80);
         fill(255);
-        text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
+        text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
 
         // Passage en mode "spiral"
         mode = "spiral";
@@ -751,7 +751,7 @@ let countdownStartTime  = 0;     // timestamp de début du compte à rebours
      ** 9.2) drawLevelPopup(): gros chiffre    **
      ********************************************/
     function drawLevelPopup() {
-      if (!gameStarted) return;
+      if (!gameStarted || mode !== "playing") return;
       let totalTime = elapsedTime;
       if (running) {
         totalTime += millis() - startTime;
