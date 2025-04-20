@@ -215,78 +215,84 @@
       });
     }
 
-    /********************************************
-     ** 3) VARIABLES & ÉTATS DU JEU (global)   **
-     ********************************************/
-    let mode = "playing"; // ou "transition", "spiral"
-    // ——— Countdown 5 s avant le start ———
+  /********************************************
+ ** 3) VARIABLES & ÉTATS DU JEU (global)   **
+ ********************************************/
+let mode = "playing"; // ou "transition", "spiral"
+// ——— Countdown 5 s avant le start ———
 const countdownDuration = 5000;  // durée du compte à rebours en millisecondes
 let countdownActive     = false; // true pendant le compte à rebours
 let countdownStartTime  = 0;     // timestamp de début du compte à rebours
-    let running = false;
-    let startTime = 0;
-    let elapsedTime = 0;
-    let gameStarted = false;
-    let showIntro = true;
-    let introStartTime = 0;
-    const uiMargin = 80;
+let running = false;
+let startTime = 0;
+let elapsedTime = 0;
+let gameStarted = false;
+let showIntro = true;
+let introStartTime = 0;
+const uiMargin = 80;
 
-    let linePoints = [];
-    let currentX = 0;
-    let currentY;
-    let currentZone = 3; // zone dynamique
+let linePoints = [];
+let currentX = 0;
+let currentY;
+let currentZone = 3; // zone dynamique
 
-    let speedX = 0.3;
-    let offsetX = 0;
-    let nextZoneTransitionTime = 0;
-    let transitionInProgress = false;
-    let zoneTransitionStartTime = 0;
-    const zoneTransitionDuration = 1500;
-    let oldY = 0;
-    let targetY = 0;
-    let targetZone = 3;
-    let oscillateMode = false;
-    let oscillationStartTime = 0;
-    const oscillationPeriod = 3000;
+let speedX = 0.3;
+let offsetX = 0;
+let nextZoneTransitionTime = 0;
+let transitionInProgress = false;
+let zoneTransitionStartTime = 0;
+const zoneTransitionDuration = 1500;
+let oldY = 0;
+let targetY = 0;
+let targetZone = 3;
+let oscillateMode = false;
+let oscillationStartTime = 0;
+const oscillationPeriod = 3000;
 
-    const levelInterval = 20000;
-    const strokeColors = ["#8A2BE2", "#4B0082", "#0000FF", "#008000", "#FFFF00", "#FFA500", "#FF0000"];
-    let currentColor = strokeColors[0];
-    const victoryTime = 140000;
-    const spiralDuration = 5000;
-    const flagBlinkCycleDuration = 500;
-    const flagDisplayDuration = 250;
-    const flagTargetBlink = 4;
-    let transitionStartTime = null;
-    let spiralStartTime = null;
-    let finalPointAtVictory = null;
-    let finalPopupBlinkCount = 0;
-    let lastPopupCycleTime = 0;
-    const popupCycleDuration = 500;
-    const popupDisplayDuration = 300;
-    const finalPopupTargetBlink = 8;
-    let finalPopupPermanent = false;
-    const popupW = 300;
-    const popupH = 100;
-    const popupRadius = 15;
-    let canvas;
+/*  Durées progressives de chaque niveau (ms)
+    Somme = 180 000 ms (180 s)  */
+const levelDurations = [18000, 21000, 23000, 25000, 27000, 30000, 36000];
 
-    // Suivi du niveau (popups)
-    let prevLevel = 1;
-    let levelPopupTimestamp = 0;
+const strokeColors = ["#8A2BE2", "#4B0082", "#0000FF", "#008000", "#FFFF00", "#FFA500", "#FF0000"];
+let currentColor = strokeColors[0];
 
-    // Flags pour sons
-    let victorySoundPlayed = false;
-    let happyEndingPlayed = false;
+/* Transition finale après 180 s */
+const victoryTime = 180000;
 
-    // ----------------- NOUVEAUTÉS POUR ÉCHEC & VICTORY ------------------
-    // Échec
-    let echecActive = false;   // Indique si "échec" est affiché
-    let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
+const spiralDuration = 5000;
+const flagBlinkCycleDuration = 500;
+const flagDisplayDuration = 250;
+const flagTargetBlink = 4;
+let transitionStartTime = null;
+let spiralStartTime = null;
+let finalPointAtVictory = null;
+let finalPopupBlinkCount = 0;
+let lastPopupCycleTime = 0;
+const popupCycleDuration = 500;
+const popupDisplayDuration = 300;
+const finalPopupTargetBlink = 8;
+let finalPopupPermanent = false;
+const popupW = 300;
+const popupH = 100;
+const popupRadius = 15;
+let canvas;
 
-    // On va dessiner victory.png en mode spiral
-    // (À la place du rectangle blanc + "💪💪💪")
-    // -------------------------------------------------------------------
+// Suivi du niveau (popups)
+let prevLevel = 1;
+let levelPopupTimestamp = 0;
+
+// Flags pour sons
+let victorySoundPlayed = false;
+let happyEndingPlayed = false;
+
+// ----------------- NOUVEAUTÉS POUR ÉCHEC & VICTORY ------------------
+// Échec
+let echecActive = false;   // Indique si "échec" est affiché
+let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
+
+// On va dessiner victory.png en mode spiral
+// (À la place du rectangle blanc + "💪💪💪")
+// -------------------------------------------------------------------
 
 
     /********************************************
@@ -478,7 +484,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v2.0", width / 2, height - 30); // centré, partie basse
+    text("v2.1", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
