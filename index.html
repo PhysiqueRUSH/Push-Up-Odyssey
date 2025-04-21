@@ -484,7 +484,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v2.2", width / 2, height - 30); // centré, partie basse
+    text("v2.3", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
@@ -529,129 +529,130 @@ if (countdownActive) {
   }
 }
 
-    /********************************************
-     ** 9) Jeu : playMode, transition, spiral  **
-     ********************************************/
-    function playMode() {
-      let totalTime = elapsedTime;
-      if (running) totalTime += millis() - startTime;
+/********************************************
+ ** 9) Jeu : playMode, transition, spiral  **
+ ********************************************/
+function playMode() {
+  let totalTime = elapsedTime;
+  if (running) totalTime += millis() - startTime;
 
-/* ------ Calcul progressif du niveau ------ */
-let level = 7;              // par défaut (temps ≥ somme)
-let cumulative = 0;
-for (let i = 0; i < levelDurations.length; i++) {
-  cumulative += levelDurations[i];
-  if (totalTime < cumulative) {
-    level = i + 1;          // niveaux 1 → 7
-    break;
+  /* ------ Calcul progressif du niveau ------ */
+  let level = 7;              // par défaut (temps ≥ somme)
+  let cumulative = 0;
+  for (let i = 0; i < levelDurations.length; i++) {
+    cumulative += levelDurations[i];
+    if (totalTime < cumulative) {
+      level = i + 1;          // niveaux 1 → 7
+      break;
+    }
+  }
+  currentColor = strokeColors[level - 1];
+  /* ----------------------------------------- */
+
+  /* ------ Durée d’attente avant changement de zone (décroît avec le niveau) ------ */
+  let delayMin = map(level, 1, 7, 1000,  50);   // Niveau 1 → 1 000 ms, niveau 7 → 50 ms
+  let delayMax = map(level, 1, 7, 4000, 200);   // Niveau 1 → 4 000 ms, niveau 7 → 200 ms
+  /* -------------------------------------------------------------------------------- */
+
+  let seconds = (totalTime / 1000).toFixed(1);
+  select('#chrono').html("Temps: " + seconds + " sec");
+  select('#level').html("Niveau: <span style='font-weight:bold; background-color:white; padding:2px; color:" +
+                          currentColor + ";'>" + level + "</span>");
+
+  // Passage en mode transition (victoire) après 180 s
+  if (totalTime >= victoryTime) {
+    finalPointAtVictory = linePoints[linePoints.length - 1];
+    mode = "transition";
+    transitionStartTime = millis();
+    running = false;
+    stopBackgroundMusic();
+  } else {
+    background(0);
+    if (running) {
+      currentX += speedX;
+
+      if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
+        nextZoneTransitionTime = 0;
+        let p = random(1);
+        let newZone = currentZone;
+
+        if (p < 0.4) {
+          newZone = currentZone;
+        } else if (p < 0.6) {
+          let candidates = [];
+          if (currentZone > 1) candidates.push(currentZone - 1);
+          if (currentZone < 5) candidates.push(currentZone + 1);
+          if (candidates.length > 0) newZone = random(candidates);
+        } else if (p < 0.8) {
+          let candidates = [];
+          if (currentZone - 2 >= 1) candidates.push(currentZone - 2);
+          if (currentZone + 2 <= 5) candidates.push(currentZone + 2);
+          if (candidates.length > 0) newZone = random(candidates);
+        } else {
+          if (currentZone === 1) newZone = 5;
+          else if (currentZone === 5) newZone = 1;
+          else if (currentZone === 2) newZone = 5;
+          else if (currentZone === 4) newZone = 1;
+          else if (currentZone === 3) newZone = random([1, 5]);
+        }
+
+        transitionInProgress = true;
+        zoneTransitionStartTime = millis();
+        oldY = currentY;
+        targetY = zoneCenterY(newZone);
+        targetZone = newZone;
+      }
+
+      if (transitionInProgress) {
+        let progress = (millis() - zoneTransitionStartTime) / zoneTransitionDuration;
+        progress = constrain(progress, 0, 1);
+        let newY = lerp(oldY, targetY, progress);
+
+        let dynamicZone = getZoneFromY(newY);
+        currentZone = dynamicZone;
+
+        if (!oscillateMode) {
+          currentY = newY;
+        } else {
+          let baseY = newY;
+          let amplitude = 10;
+          let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
+          currentY = baseY + oscillVal;
+        }
+
+        if (progress >= 1) {
+          transitionInProgress = false;
+          /* ------------ délai suivant dépend du niveau ------------ */
+          nextZoneTransitionTime = millis() + random(delayMin, delayMax);
+          /* -------------------------------------------------------- */
+          oscillateMode = (random(1) < 0.5);        // on garde encore des oscillations
+          if (oscillateMode) oscillationStartTime = millis();
+        }
+      } else {
+        if (oscillateMode) {
+          let baseY = zoneCenterY(currentZone);
+          let amplitude = 10;
+          let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
+          currentY = baseY + oscillVal;
+        } else {
+          currentY = zoneCenterY(currentZone);
+        }
+      }
+
+      linePoints.push({ x: currentX, y: currentY });
+    }
+
+    offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
+    strokeWeight(4);
+    stroke(currentColor);
+    noFill();
+    beginShape();
+    for (let pt of linePoints) {
+      vertex(pt.x - offsetX, pt.y);
+    }
+    endShape();
   }
 }
-currentColor = strokeColors[level - 1];
-/* ----------------------------------------- */
-
-// Passage en mode transition (victoire) après 180 s
-
-
-      let seconds = (totalTime / 1000).toFixed(1);
-      select('#chrono').html("Temps: " + seconds + " sec");
-      select('#level').html("Niveau: <span style='font-weight:bold; background-color:white; padding:2px; color:" +
-                              currentColor + ";'>" + level + "</span>");
-
-      // Passage en mode transition (victoire) après 140 s
-      if (totalTime >= victoryTime) {
-        finalPointAtVictory = linePoints[linePoints.length - 1];
-        mode = "transition";
-        transitionStartTime = millis();
-        running = false;
-        stopBackgroundMusic();
-      } else {
-        background(0);
-        if (running) {
-          currentX += speedX;
-
-          if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
-            nextZoneTransitionTime = 0;
-            let p = random(1);
-            let newZone = currentZone;
-
-            if (p < 0.4) {
-              newZone = currentZone;
-            } else if (p < 0.6) {
-              let candidates = [];
-              if (currentZone > 1) candidates.push(currentZone - 1);
-              if (currentZone < 5) candidates.push(currentZone + 1);
-              if (candidates.length > 0) newZone = random(candidates);
-            } else if (p < 0.8) {
-              let candidates = [];
-              if (currentZone - 2 >= 1) candidates.push(currentZone - 2);
-              if (currentZone + 2 <= 5) candidates.push(currentZone + 2);
-              if (candidates.length > 0) newZone = random(candidates);
-            } else {
-              // Changement extrême
-              if (currentZone === 1) newZone = 5;
-              else if (currentZone === 5) newZone = 1;
-              else if (currentZone === 2) newZone = 5;
-              else if (currentZone === 4) newZone = 1;
-              else if (currentZone === 3) newZone = random([1, 5]);
-            }
-
-            transitionInProgress = true;
-            zoneTransitionStartTime = millis();
-            oldY = currentY;
-            targetY = zoneCenterY(newZone);
-            targetZone = newZone;
-          }
-
-          if (transitionInProgress) {
-            let progress = (millis() - zoneTransitionStartTime) / zoneTransitionDuration;
-            progress = constrain(progress, 0, 1);
-            let newY = lerp(oldY, targetY, progress);
-
-            // On recalcule la zone en fonction de la position courante
-            let dynamicZone = getZoneFromY(newY);
-            currentZone = dynamicZone;
-
-            if (!oscillateMode) {
-              currentY = newY;
-            } else {
-              let baseY = newY;
-              let amplitude = 10;
-              let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
-              currentY = baseY + oscillVal;
-            }
-
-            if (progress >= 1) {
-              transitionInProgress = false;
-              nextZoneTransitionTime = millis() + random(1000, 4000);
-              oscillateMode = (random(1) < 0.5);
-              if (oscillateMode) oscillationStartTime = millis();
-            }
-          } else {
-            // Pas de transition => zone stable
-            if (oscillateMode) {
-              let baseY = zoneCenterY(currentZone);
-              let amplitude = 10;
-              let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
-              currentY = baseY + oscillVal;
-            } else {
-              currentY = zoneCenterY(currentZone);
-            }
-          }
-
-          linePoints.push({ x: currentX, y: currentY });
-        }
-
-        offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
-        strokeWeight(4);
-        stroke(currentColor);
-        noFill();
-        beginShape();
-        for (let pt of linePoints) {
-          vertex(pt.x - offsetX, pt.y);
-        }
-        endShape();
-      }
-    }
 
     function transitionMode() {
       background(0);
