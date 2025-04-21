@@ -484,7 +484,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v2.4", width / 2, height - 30); // centré, partie basse
+    text("v2.5", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
@@ -674,7 +674,7 @@ function playMode() {
           textAlign(CENTER, CENTER);
           textSize(60);
           fill(255);
-          text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
+          text("🏁", finalPointAtVictory.x - offsetX +90, finalPointAtVictory.y);
         }
       } else {
         // On affiche le drapeau en permanence
@@ -685,7 +685,7 @@ function playMode() {
         textAlign(CENTER, CENTER);
         textSize(40);
         fill(255);
-        text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
+        text("🏁", finalPointAtVictory.x - offsetX +90, finalPointAtVictory.y);
 
         // Passage en mode "spiral"
         mode = "spiral";
@@ -782,7 +782,7 @@ function playMode() {
  ** 9.2) drawLevelPopup(): gros chiffre    **
  ********************************************/
 function drawLevelPopup() {
-  if (!gameStarted) return;
+  if (mode !== "playing" || !gameStarted) return;
 
   let totalTime = elapsedTime;
   if (running) totalTime += millis() - startTime;
