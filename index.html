@@ -484,7 +484,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v2.3", width / 2, height - 30); // centré, partie basse
+    text("v2.4", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
@@ -655,7 +655,6 @@ function playMode() {
 }
 
     function transitionMode() {
-      background(0);
       strokeWeight(4);
       stroke(currentColor);
       noFill();
@@ -664,15 +663,18 @@ function playMode() {
         vertex(pt.x - offsetX, pt.y);
       }
       endShape();
-
+      
+  /* ----------- Image push‑up au bout de la ligne ----------- */
+  drawPushupImageForZone(currentZone);
+      
       let elapsed = millis() - transitionStartTime;
       let blinkCycle = floor(elapsed / flagBlinkCycleDuration);
       if (blinkCycle < flagTargetBlink) {
         if ((elapsed % flagBlinkCycleDuration) < flagDisplayDuration) {
           textAlign(CENTER, CENTER);
-          textSize(40);
+          textSize(60);
           fill(255);
-          text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
+          text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
         }
       } else {
         // On affiche le drapeau en permanence
@@ -683,7 +685,7 @@ function playMode() {
         textAlign(CENTER, CENTER);
         textSize(40);
         fill(255);
-        text("🏁", finalPointAtVictory.x - offsetX, finalPointAtVictory.y);
+        text("🏁", finalPointAtVictory.x - offsetX +40, finalPointAtVictory.y);
 
         // Passage en mode "spiral"
         mode = "spiral";
