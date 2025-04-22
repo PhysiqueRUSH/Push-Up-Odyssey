@@ -75,6 +75,7 @@
      ********************************************/
     let pushupImg1, pushupImg2, pushupImg3, pushupImg4, pushupImg5;
     let echecImg, victoryImg;
+    let menuBgImg;          // fond du menu
 
     function preload() {
       // Chargez vos 5 images pushup
@@ -83,6 +84,7 @@
       pushupImg3 = loadImage('pushup3.png');
       pushupImg4 = loadImage('pushup4.png');
       pushupImg5 = loadImage('pushup5.png');
+      menuBgImg = loadImage('goodvibesmenu.png');
 
       // Charge les 2 nouvelles images
       echecImg = loadImage('echec.png');
@@ -218,7 +220,10 @@
   /********************************************
  ** 3) VARIABLES & ÉTATS DU JEU (global)   **
  ********************************************/
-let mode = "playing"; // ou "transition", "spiral"
+let mode = "menu"; // menu principal
+// --- MENU & flèche retour ---
+let menuButtons = [];    // tableau des 6 boutons
+let backButton  = null;  // bouton ⏪ pour revenir au menu
 // ——— Countdown 5 s avant le start ———
 const countdownDuration = 5000;  // durée du compte à rebours en millisecondes
 let countdownActive     = false; // true pendant le compte à rebours
@@ -385,15 +390,73 @@ let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
       linePoints.push({ x: currentX, y: currentY });
       nextZoneTransitionTime = millis() + random(1000, 4000);
 
+        // Cache Start / Stop tant qu'on est dans le menu
+  select('#startButton').hide();
+  select('#stopButton').hide();
+
       // Boutons
       select('#startButton').mousePressed(startGame);
       select('#stopButton').mousePressed(stopGame);
       select('#restartButton').style('display', 'none');
       select('#restartButton').mousePressed(restartGame);
+
+        /* ========== Boutons du MENU ========== */
+  const labels = ["Jouer", "Instructions", "Personnages",
+                  "Records", "Défis et Trophées", "Quitter"];
+
+  labels.forEach((txt, i) => {
+    let btn = createButton(txt);
+    btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
+    btn.size(160, 40);
+    btn.style('font-size', '18px');
+    btn.style('z-index', '15');           // devant le canvas
+    btn.mousePressed(() => menuClick(txt));
+    menuButtons.push(btn);
+  });
+
+  // Seul "Jouer" actif pour l'instant
+  menuButtons.slice(1).forEach(b => b.attribute('disabled', ''));
+
+    /* Flèche retour ⏪ */
+  backButton = createButton("⏪");
+  backButton.position(10, 10);   // coin haut‑gauche
+  backButton.size(40, 40);
+  backButton.style('font-size', '24px');
+  backButton.style('z-index', '15');
+  backButton.mousePressed(goToMenu);
+  backButton.hide();             // visible seulement hors menu
     }
     function windowResized() {
-      resizeCanvas(windowWidth, windowHeight);
-    }
+  resizeCanvas(windowWidth, windowHeight);
+  // recentre les boutons du menu
+  menuButtons.forEach((btn, i) => {
+    btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
+  });
+}
+
+    function menuClick(label) {
+  if (label === "Jouer") {
+    // cacher le menu, montrer Start/Stop et lancer le mode playing
+    menuButtons.forEach(b => b.hide());
+    select('#startButton').show();
+    select('#stopButton').show();
+    backButton.show();
+    mode = "playing";
+    showIntro = false;       // ne revisite pas l'introduction
+  }
+  // d'autres boutons seront codés plus tard
+}
+
+function goToMenu() {
+  running = false;
+  stopBackgroundMusic();
+  backButton.hide();
+  select('#startButton').hide();
+  select('#stopButton').hide();
+  restartGame();             // réinitialise le jeu
+  menuButtons.forEach(b => b.show());
+  mode = "menu";
+}
 
     /********************************************
      ** 7) BOUTONS : START, STOP, RESTART      **
@@ -484,7 +547,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v2.5", width / 2, height - 30); // centré, partie basse
+    text("v3.0", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
@@ -492,6 +555,13 @@ function draw() {
     }
     return;
   }
+
+function drawMenu() {
+  // Affiche l'image de fond sur tout l'écran
+  imageMode(CORNER);
+  image(menuBgImg, 0, 0, width, height);
+}
+  
 // —— Affichage et gestion du compte à rebours 5 s ——
 if (countdownActive) {
   background(0);
@@ -512,6 +582,10 @@ if (countdownActive) {
   }
   return;  // on ne poursuit pas le reste du draw tant que le countdown est actif
 }
+    if (mode === "menu") {
+    drawMenu();
+    return;
+    }
   if (mode === "playing") {
     playMode();
     drawZoneBoundaries();
@@ -533,6 +607,7 @@ if (countdownActive) {
  ** 9) Jeu : playMode, transition, spiral  **
  ********************************************/
 function playMode() {
+    if (backButton) backButton.show();
   let totalTime = elapsedTime;
   if (running) totalTime += millis() - startTime;
 
@@ -655,6 +730,7 @@ function playMode() {
 }
 
     function transitionMode() {
+        if (backButton) backButton.show();
       strokeWeight(4);
       stroke(currentColor);
       noFill();
@@ -699,6 +775,7 @@ function playMode() {
     }
 
     function spiralMode() {
+        if (backButton) backButton.show();
       background(0);
       let cx = width / 2, cy = height / 2;
       let dt = millis() - spiralStartTime;
