@@ -408,39 +408,35 @@ let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
                   "Records", "Défis et Trophées", "Quitter"];
 
 labels.forEach((txt, i) => {
-
-  /* ---------- 1. Libellé avec retour à la ligne si besoin ---------- */
-  // On force un <br> uniquement pour "Défis et Trophées"
+  // 1. Libellé : retour à la ligne manuel si besoin
   const labelHTML = (txt === "Défis et Trophées")
                     ? "Défis&nbsp;et<br>Trophées"
                     : txt;
 
-  /* ---------- 2. Création du bouton ---------- */
-  let btn = createButton(labelHTML);
+  const btn = createButton(labelHTML);
 
-  /* ---------- 3. Position / taille identiques pour tous ---------- */
-  btn.position(width / 2 - 80,         // (160 px / 2)
-               height / 2 - 120 + i * 60);
+  // 2. Position & taille (inchangées)
+  btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
   btn.size(160, 40);
 
-  /* ---------- 4. Styles : centrage total + wrap autorisé ---------- */
-  btn.style('font-size',  '18px');
-  btn.style('z-index',    '15');          // devant le canvas
-  btn.style('display',    'flex');        // flexbox
-  btn.style('align-items','center');      // centre vertical
-  btn.style('justify-content','center');  // centre horizontal
-  btn.style('text-align','center');
-  btn.style('white-space','normal');      // autorise le <br>
-  btn.style('line-height','18px');        // évite un gros interligne
+  // 3. Styles communs
+  btn.style('z-index', '15');
+  btn.style('display', 'flex');
+  btn.style('align-items', 'center');        // centrage vertical
+  btn.style('justify-content', 'center');    // centrage horizontal
+  btn.style('text-align', 'center');
+  btn.style('white-space', 'normal');        // autorise le <br>
+  btn.style('font-size', '18px');
+  btn.style('line-height', '18px');          // === font-size
+  btn.style('padding', '0');                 // retire le padding vertical
 
-  /* ---------- 5. Comportement ---------- */
+  // 4. Callback et stockage
   btn.mousePressed(() => menuClick(txt));
   menuButtons.push(btn);
 });
 
-/* Cache tous les boutons pendant l'intro */
+/* cache tous les boutons tant que l'intro est affichée */
 menuButtons.forEach(b => b.hide());
-
       
   // Seul "Jouer" actif pour l'instant
   menuButtons.slice(1).forEach(b => b.attribute('disabled', ''));
