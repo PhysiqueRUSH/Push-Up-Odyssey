@@ -441,22 +441,45 @@ menuButtons.forEach(b => b.hide());
   // Seul "Jouer" actif pour l'instant
   menuButtons.slice(1).forEach(b => b.attribute('disabled', ''));
 
-    /* Flèche retour ⏪ */
-  backButton = createButton("⏪");
-  backButton.position(10, 10);   // coin haut‑gauche
-  backButton.size(40, 40);
-  backButton.style('font-size', '24px');
-  backButton.style('z-index', '15');
-  backButton.mousePressed(goToMenu);
-  backButton.hide();             // visible seulement hors menu
-    }
-    function windowResized() {
+/* Flèche retour ⏪ */
+const backSize = 60;                                // 50 % plus gros que 40 px
+backButton = createButton("⏪");
+backButton.position(windowWidth - backSize - 10,     // coin bas-droit
+                    windowHeight - backSize - 10);
+backButton.size(backSize, backSize);
+backButton.style('font-size',  '36px');              // emoji agrandi
+backButton.style('z-index',    '15');
+
+/* — Bouton entièrement transparent — */
+backButton.style('background', 'transparent');
+backButton.style('border',     'none');
+backButton.style('outline',    'none');
+
+/* — Centre parfaitement l’emoji dans le carré — */
+backButton.style('display',    'flex');
+backButton.style('align-items','center');
+backButton.style('justify-content','center');
+backButton.style('padding',    '0');
+
+backButton.mousePressed(goToMenu);
+backButton.hide();                                    // visible hors menu
+}
+
+function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+
   // recentre les boutons du menu
   menuButtons.forEach((btn, i) => {
     btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
   });
+
+  // repositionne la flèche ⏪ dans le coin bas-droit
+  if (backButton) {
+    backButton.position(windowWidth - backSize - 10,
+                        windowHeight - backSize - 10);
+  }
 }
+
 
     function menuClick(label) {
   if (label === "Jouer") {
@@ -578,7 +601,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v3.21", width / 2, height - 30); // centré, partie basse
+    text("v3.22", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
