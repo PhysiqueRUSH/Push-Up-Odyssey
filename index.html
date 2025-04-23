@@ -414,6 +414,8 @@ let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
     menuButtons.push(btn);
   });
 
+menuButtons.forEach(b => b.hide());
+      
   // Seul "Jouer" actif pour l'instant
   menuButtons.slice(1).forEach(b => b.attribute('disabled', ''));
 
@@ -547,7 +549,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v3.0", width / 2, height - 30); // centré, partie basse
+    text("v3.1", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
@@ -560,6 +562,7 @@ function drawMenu() {
   // Affiche l'image de fond sur tout l'écran
   imageMode(CORNER);
   image(menuBgImg, 0, 0, width, height);
+  menuButtons.forEach(b => b.show());
 }
   
 // —— Affichage et gestion du compte à rebours 5 s ——
