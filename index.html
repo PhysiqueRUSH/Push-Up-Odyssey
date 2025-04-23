@@ -407,17 +407,40 @@ let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
   const labels = ["Jouer", "Instructions", "Personnages",
                   "Records", "Défis et Trophées", "Quitter"];
 
-  labels.forEach((txt, i) => {
-    let btn = createButton(txt);
-    btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
-    btn.size(160, 40);
-    btn.style('font-size', '18px');
-    btn.style('z-index', '15');           // devant le canvas
-    btn.mousePressed(() => menuClick(txt));
-    menuButtons.push(btn);
-  });
+labels.forEach((txt, i) => {
 
+  /* ---------- 1. Libellé avec retour à la ligne si besoin ---------- */
+  // On force un <br> uniquement pour "Défis et Trophées"
+  const labelHTML = (txt === "Défis et Trophées")
+                    ? "Défis&nbsp;et<br>Trophées"
+                    : txt;
+
+  /* ---------- 2. Création du bouton ---------- */
+  let btn = createButton(labelHTML);
+
+  /* ---------- 3. Position / taille identiques pour tous ---------- */
+  btn.position(width / 2 - 80,         // (160 px / 2)
+               height / 2 - 120 + i * 60);
+  btn.size(160, 40);
+
+  /* ---------- 4. Styles : centrage total + wrap autorisé ---------- */
+  btn.style('font-size',  '18px');
+  btn.style('z-index',    '15');          // devant le canvas
+  btn.style('display',    'flex');        // flexbox
+  btn.style('align-items','center');      // centre vertical
+  btn.style('justify-content','center');  // centre horizontal
+  btn.style('text-align','center');
+  btn.style('white-space','normal');      // autorise le <br>
+  btn.style('line-height','18px');        // évite un gros interligne
+
+  /* ---------- 5. Comportement ---------- */
+  btn.mousePressed(() => menuClick(txt));
+  menuButtons.push(btn);
+});
+
+/* Cache tous les boutons pendant l'intro */
 menuButtons.forEach(b => b.hide());
+
       
   // Seul "Jouer" actif pour l'instant
   menuButtons.slice(1).forEach(b => b.attribute('disabled', ''));
@@ -559,7 +582,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v3.2", width / 2, height - 30); // centré, partie basse
+    text("v3.21", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
