@@ -393,6 +393,9 @@ let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
         // Cache Start / Stop tant qu'on est dans le menu
   select('#startButton').hide();
   select('#stopButton').hide();
+        // Cache aussi le chrono et le niveau tant qu'on est dans l'intro / menu
+  select('#chrono').hide();
+  select('#level').hide();
 
       // Boutons
       select('#startButton').mousePressed(startGame);
@@ -455,6 +458,9 @@ function goToMenu() {
   backButton.hide();
   select('#startButton').hide();
   select('#stopButton').hide();
+    // cache chrono et niveau de nouveau
+  select('#chrono').hide();
+  select('#level').hide();
   restartGame();             // réinitialise le jeu
   menuButtons.forEach(b => b.show());
   mode = "menu";
@@ -468,6 +474,10 @@ function goToMenu() {
 
   // 1er clic : on lance le compte à rebours au lieu de démarrer direct
   if (!gameStarted) {
+        // on affiche le chrono et le niveau dès le compte à rebours
+    select('#chrono').show();
+    select('#level').show();
+    
     countdownActive    = true;
     countdownStartTime = millis();
     gameStarted        = true;  // marque le début (même si on n'est pas encore running)
@@ -549,7 +559,7 @@ function draw() {
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v3.1", width / 2, height - 30); // centré, partie basse
+    text("v3.2", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
