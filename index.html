@@ -496,6 +496,7 @@ function windowResized() {
   if (label === "Jouer") {
     // cacher le menu, montrer Start/Stop et lancer le mode playing
     menuButtons.forEach(b => b.hide());
+    toggleMenuButtons(false);
     select('#startButton').show();
     select('#stopButton').show();
     backButton.show();
