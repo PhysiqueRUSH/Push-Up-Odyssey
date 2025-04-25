@@ -609,6 +609,18 @@ function goToMenu() {
 function draw() {
   // Écran blanc d'intro
   if (showIntro) {
+
+background(255);
+  fill('red');
+  ellipse(width/2, height/2, 200);    // TEST ░░░░░░░
+  textAlign(CENTER, CENTER);
+
+  textSize(200);                      // valeur énorme pour le test
+  fill(0);
+  text("TEST", width/2, height/2 - 150);
+
+  noLoop();
+    
     background(255);
     textAlign(CENTER, CENTER);
 
