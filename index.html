@@ -58,6 +58,14 @@
       border-radius: 15px;
       cursor: pointer;
     }
+    /* --- AJOUTE ÇA tout en bas de ton <style> existant --- */
+#startButton,
+#stopButton,
+#chrono,
+#level,
+#restartButton{
+  display:none;      /* caché dès la construction du DOM   */
+}
   </style>
 </head>
 
@@ -611,7 +619,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.30e", width / 2, height - 30);
+    text("v3.30f", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -683,7 +691,7 @@ function drawMenu() {
 ---------------------------------------------------------- */
 function drawRecords() {
   background(0);
-  textAlign(CENTER, CENTER);
+  textAlign(LEFT, CENTER);
   textStyle(BOLD);
   textSize(25);
   fill('#FF7F00');                         // orange rétro
@@ -1098,7 +1106,6 @@ window.onerror = (msg, src, line) => {
   };
 });*/
 </script>
-//<!-- ======================================================== -->
 </body>
 </html>
 
