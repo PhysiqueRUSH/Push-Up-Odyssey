@@ -660,6 +660,10 @@ if (countdownActive) {
     drawMenu();
     return;
     }
+    if (mode === MODE_RECORDS) {
+    drawRecords();
+    return;
+    }
   if (mode === "playing") {
     playMode();
     drawZoneBoundaries();
