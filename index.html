@@ -389,7 +389,6 @@ function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.position(0, 0);
   canvas.style('z-index', '-1');
-  textFont('Press Start 2P');          // police rétro 8-bit
   background(0);
 
   setupRetroSound();
@@ -606,8 +605,7 @@ function draw() {
   if (showIntro) {
     background(255);
     textAlign(CENTER, CENTER);
-    textFont('Press Start 2P');
-    textSize(180);                 // taille lisible pour Press Start 2P
+    textSize(80);                 // taille lisible pour Press Start 2P
     fill(0);
     text("Push Up Odyssey", width / 2, height / 2);
 
@@ -635,7 +633,7 @@ function draw() {
   if (countdownActive) {
     background(0);
     textAlign(CENTER, CENTER);
-    textSize(100);
+    textSize(80);
     fill(255);
 
     let elapsed     = millis() - countdownStartTime;
@@ -685,8 +683,6 @@ function drawMenu() {
 ---------------------------------------------------------- */
 function drawRecords() {
   background(0);
-
-  textFont(pressStartFont);
   textAlign(CENTER, CENTER);
   textStyle(BOLD);
   textSize(30);
