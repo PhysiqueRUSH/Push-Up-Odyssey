@@ -619,15 +619,8 @@ function draw() {
 
   background(255);                // 1) fond blanc une seule fois
   textAlign(CENTER, CENTER);
-
-  /* === TEST TEMPORAIRE === */
-  fill('red');
-  noStroke();
-  ellipse(width/2, height/2, 200); // cercle rouge visible
-  /* ======================= */
-
-  textFont('Press Start 2P');      // police rétro
-  textSize(100);                   // ajuste à ton goût
+  textFont(pressStartFont);  // ← police rétro
+  textSize(180);             // 180 px ≈ “grand” pour Press Start 2P
   fill(0);
   text("Push Up Odyssey", width/2, height/2);
 
@@ -653,6 +646,7 @@ function drawMenu() {
   // plein écran noir
   background(0);
   // texte orange, gras, centré
+  textFont(pressStartFont)
   textAlign(CENTER, CENTER);
   fill('#FF7F00');          // orange vif
   textStyle(BOLD);
