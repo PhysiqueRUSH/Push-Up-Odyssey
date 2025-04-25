@@ -78,6 +78,8 @@
     let pushupImg1, pushupImg2, pushupImg3, pushupImg4, pushupImg5;
     let echecImg, victoryImg;
     let menuBgImg;          // fond du menu
+    let pressStartFont;                 // variable globale
+
 
     function preload() {
       // Chargez vos 5 images pushup
@@ -91,6 +93,11 @@
       // Charge les 2 nouvelles images
       echecImg = loadImage('echec.png');
       victoryImg = loadImage('victory.png');
+        
+      // charge la police en .woff (lien Google Fonts direct)
+  pressStartFont = loadFont(
+    'https://fonts.gstatic.com/s/pressstart2p/v15/e3t4euO8T-267oIAQAu6jDQyK3nUMvHQ.woff'
+  );
     }
 
     /********************************************
