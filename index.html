@@ -635,6 +635,28 @@ function drawMenu() {
   image(menuBgImg, 0, 0, width, height);
   menuButtons.forEach(b => b.show());
 }
+
+  function drawRecords() {
+  // plein écran noir
+  background(0);
+  // texte orange, gras, centré
+  textAlign(CENTER, CENTER);
+  fill('#FF7F00');          // orange vif
+  textStyle(BOLD);
+  textSize(18);             // lisible sur mobile
+  const lines = [
+    "Plus longue série :",
+    "Odyssée la plus courte :",
+    "Record d'Odyssées enchaînées :"
+  ];
+  const startY = height / 2 - 40;    // point de départ vertical
+  const lineH  = 40;                 // espacement entre lignes
+  for (let i = 0; i < lines.length; i++) {
+    text(lines[i], width / 2, startY + i * lineH);
+  }
+  // la flèche ⏪ est déjà visible (backButton.show() dans menuClick)
+  }
+  
   
 // —— Affichage et gestion du compte à rebours 5 s ——
 if (countdownActive) {
