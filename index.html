@@ -1074,39 +1074,38 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* ============== LOGGER VISUEL ============== */
+/* ====== LOGGER VISUEL (à placer juste avant </body>) ====== */
+</script>
+
 <div id="logger"
      style="position:fixed;bottom:0;left:0;right:0;
             max-height:40%;overflow:auto;
             background:#300;color:#ff8080;
             font-family:monospace;font-size:12px;
-            padding:4px;z-index:9999;display:none;
-            pointer-events:none;"></div>
+            padding:4px;z-index:9999;display:none;"></div>
 
 <script>
-// — Affiche uniquement les erreurs JS non capturées —
+// 1) Erreurs JS non capturées
 window.onerror = (msg, src, line) => {
   const log = document.getElementById('logger');
   if (!log) return;
   log.style.display = 'block';
-  log.textContent += `\n${msg}  (${src}:${line})`;
+  log.innerText += `\n${msg}  (${src}:${line})`;
 };
 
-//  Pour ré-activer l’affichage des console.log, dé-commente
-    le bloc ci-dessous.
-
+// 2) Redirige console.log / warn / error
 ['log','warn','error'].forEach(fn => {
-  const orig = console[fn];
-  console[fn] = (...args) => {
-    orig.apply(console, args);
+  const o = console[fn];
+  console[fn] = (...a) => {
+    o.apply(console, a);
     const log = document.getElementById('logger');
     if (!log) return;
     log.style.display = 'block';
-    log.textContent += `\n[${fn}] ${args.join(' ')}`;
+    log.innerText += `\n[${fn}] ${a.join(' ')}`;
   };
 });
-//!!!
 </script>
-<!-- ======================================== -->
+<!-- ======================================================== -->
 </body>
 </html>
+
