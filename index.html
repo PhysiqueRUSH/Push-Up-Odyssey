@@ -501,7 +501,16 @@ function windowResized() {
     mode = "playing";
     showIntro = false;       // ne revisite pas l'introduction
   }
-  // d'autres boutons seront codés plus tard
+  else if (label === "Records") {             // <-- nouveau cas
+    menuButtons.forEach(b => b.hide());         // cacher le menu
+    backButton.show();                          // flèche visible
+    select('#startButton').hide();              // rien d'autre
+    select('#stopButton').hide();
+    select('#chrono').hide();
+    select('#level').hide();
+    mode = MODE_RECORDS;                        // on passe en mode records
+  }
+      // d'autres boutons seront codés plus tard
 }
 
 function goToMenu() {
