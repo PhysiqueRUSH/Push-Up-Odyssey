@@ -685,28 +685,33 @@ function drawMenu() {
   menuButtons.forEach(b => b.show());      // montre les 6 boutons
 }
 
-
 /* ----------------------------------------------------------
    Page « Records » – fond noir + 3 lignes orange rétro
 ---------------------------------------------------------- */
 function drawRecords() {
   background(0);
-  textAlign(LEFT, CENTER);
+
+  // style
+  textAlign(LEFT, CENTER);   // gauche / centré verticalement
   textStyle(BOLD);
   textSize(25);
-  fill('#FF7F00');                         // orange rétro
+  fill('#FF7F00');
 
-  const lines = [
+  // données
+  const lines  = [
     "Plus longue série :",
     "Odyssée la plus rapide :",
     "Record d'Odyssées enchaînées :"
   ];
-  const startY = height / 2 - 40;
-  const lineH  = 40;
-  const margin = 40;
+
+  /* ---- placement ---- */
+  const lineH   = 40;          // interligne
+  const marginX = 40;          // marge gauche désirée
+  const totalH  = lines.length * lineH;
+  const startY  = (height - totalH) / 2 + lineH/2;   // centre vertical
 
   for (let i = 0; i < lines.length; i++) {
-    text(lines[i], width / 2, startY + i * lineH);
+    text(lines[i], marginX, startY + i * lineH);
   }
 }
 
