@@ -381,106 +381,100 @@ let echecX = 0, echecY = 0; // Position finale où on dessine echec.png
     // -----------------------------------------------------------------------
 
 
-    /********************************************
-     ** 6) SETUP & RESIZE (p5.js)              **
-     ********************************************/
-    function setup() {
-      canvas = createCanvas(windowWidth, windowHeight);
-      canvas.position(0, 0);
-      canvas.style('z-index', '-1');
-      textFont('Press Start 2P');   // police rétro 8-bit
-      background(0);
+/********************************************
+ ** 6) SETUP & RESIZE (p5.js)              **
+ ********************************************/
 
-      setupRetroSound();
-      setupBackgroundMusic();
+// Active ou désactive temporairement les clics sur les boutons du menu
+function toggleMenuButtons(enable) {
+  menuButtons.forEach(b => {
+    b.style('pointer-events', enable ? 'auto' : 'none');
+  });
+}
 
-      introStartTime = millis();
-      currentX = 0;
-      currentZone = 3;
-      currentY = zoneCenterY(currentZone);
-      linePoints.push({ x: currentX, y: currentY });
-      nextZoneTransitionTime = millis() + random(1000, 4000);
+function setup() {
+  canvas = createCanvas(windowWidth, windowHeight);
+  canvas.position(0, 0);
+  canvas.style('z-index', '-1');
+  textFont('Press Start 2P');          // police rétro 8-bit
+  background(0);
 
-        // Cache Start / Stop tant qu'on est dans le menu
+  setupRetroSound();
+  setupBackgroundMusic();
+
+  introStartTime = millis();
+  currentX = 0;
+  currentZone = 3;
+  currentY = zoneCenterY(currentZone);
+  linePoints.push({ x: currentX, y: currentY });
+  nextZoneTransitionTime = millis() + random(1000, 4000);
+
+  /* ---- cache les éléments de jeu tant qu’on est dans le menu ---- */
   select('#startButton').hide();
   select('#stopButton').hide();
-        // Cache aussi le chrono et le niveau tant qu'on est dans l'intro / menu
   select('#chrono').hide();
   select('#level').hide();
 
-      // Boutons
-      select('#startButton').mousePressed(startGame);
-      select('#stopButton').mousePressed(stopGame);
-      select('#restartButton').style('display', 'none');
-      select('#restartButton').mousePressed(restartGame);
+  /* ---- callbacks des boutons de jeu ---- */
+  select('#startButton').mousePressed(startGame);
+  select('#stopButton').mousePressed(stopGame);
+  select('#restartButton').style('display', 'none');
+  select('#restartButton').mousePressed(restartGame);
 
-        /* ========== Boutons du MENU ========== */
+  /* ========== Boutons du MENU ========== */
   const labels = ["Jouer", "Instructions", "Personnages",
                   "Records", "Défis et Trophées", "Quitter"];
 
-labels.forEach((txt, i) => {
-  // 1. Libellé : retour à la ligne manuel si besoin
-  const labelHTML = (txt === "Défis et Trophées")
-                    ? "Défis&nbsp;et<br>Trophées"
-                    : txt;
+  labels.forEach((txt, i) => {
+    const labelHTML = (txt === "Défis et Trophées")
+                      ? "Défis&nbsp;et<br>Trophées"
+                      : txt;
 
-  const btn = createButton(labelHTML);
+    const btn = createButton(labelHTML);
+    btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
+    btn.size(160, 40);
+    btn.style('z-index', '15');
+    btn.style('display', 'flex');
+    btn.style('align-items', 'center');
+    btn.style('justify-content', 'center');
+    btn.style('text-align', 'center');
+    btn.style('white-space', 'normal');
+    btn.style('font-size', '18px');
+    btn.style('line-height', '18px');
+    btn.style('padding', '0');
+    btn.mousePressed(() => menuClick(txt));
+    menuButtons.push(btn);
+  });
 
-  // 2. Position & taille (inchangées)
-  btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
-  btn.size(160, 40);
+  /* cache les boutons pendant l’intro & désactive leurs clics */
+  menuButtons.forEach(b => b.hide());
+  toggleMenuButtons(false);
 
-  // 3. Styles communs
-  btn.style('z-index', '15');
-  btn.style('display', 'flex');
-  btn.style('align-items', 'center');        // centrage vertical
-  btn.style('justify-content', 'center');    // centrage horizontal
-  btn.style('text-align', 'center');
-  btn.style('white-space', 'normal');        // autorise le <br>
-  btn.style('font-size', '18px');
-  btn.style('line-height', '18px');          // === font-size
-  btn.style('padding', '0');                 // retire le padding vertical
-
-  // 4. Callback et stockage
-  btn.mousePressed(() => menuClick(txt));
-  menuButtons.push(btn);
-});
-
-/* cache tous les boutons tant que l'intro est affichée */
-menuButtons.forEach(b => b.hide());
-      
-  // Boutons actifs et inactifs du menu
+  /* la suite : désactive Instr., Perso., … sauf Jouer et Records */
   menuButtons.forEach((b, i) => {
-  const txt = labels[i];
-  if (txt !== "Jouer" && txt !== "Records") {
-    b.attribute('disabled', '');
-  }
-});
+    const txt = labels[i];
+    if (txt !== "Jouer" && txt !== "Records") b.attribute('disabled', '');
+  });
 
-
-/* Flèche retour ⏪ */
-const backSize = 60;                                // 50 % plus gros que 40 px
-backButton = createButton("⏪");
-backButton.position(windowWidth - backSize - 10,     // coin bas-droit
-                    windowHeight - backSize - 10);
-backButton.size(backSize, backSize);
-backButton.style('font-size',  '36px');              // emoji agrandi
-backButton.style('z-index',    '15');
-
-/* — Bouton entièrement transparent — */
-backButton.style('background', 'transparent');
-backButton.style('border',     'none');
-backButton.style('outline',    'none');
-
-/* — Centre parfaitement l’emoji dans le carré — */
-backButton.style('display',    'flex');
-backButton.style('align-items','center');
-backButton.style('justify-content','center');
-backButton.style('padding',    '0');
-
-backButton.mousePressed(goToMenu);
-backButton.hide();                                    // visible hors menu
-}
+  /* ===== flèche ⏪ ===== */
+  const backSize = 60;
+  backButton = createButton("⏪");
+  backButton.position(windowWidth - backSize - 10,
+                      windowHeight - backSize - 10);
+  backButton.size(backSize, backSize);
+  backButton.style('font-size', '36px');
+  backButton.style('z-index', '15');
+  backButton.style('background', 'transparent');
+  backButton.style('border', 'none');
+  backButton.style('outline', 'none');
+  backButton.style('display', 'flex');
+  backButton.style('align-items', 'center');
+  backButton.style('justify-content', 'center');
+  backButton.style('padding', '0');
+  backButton.mousePressed(goToMenu);
+  backButton.hide();           // visible hors menu
+}   // <-- FIN de setup()
+    
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -639,6 +633,7 @@ function drawMenu() {
   // Affiche l'image de fond sur tout l'écran
   imageMode(CORNER);
   image(menuBgImg, 0, 0, width, height);
+  toggleMenuButtons(true);        // ← ré-active les clics ici
   menuButtons.forEach(b => b.show());
 }
 
