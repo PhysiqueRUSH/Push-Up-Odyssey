@@ -613,14 +613,14 @@ function draw() {
     textAlign(CENTER, CENTER);
 
     // Titre principal
-    textSize(120);
+    textSize(100);
     fill(0);
     text("Push Up Odyssey", width / 2, height / 2);
 
     /* ---------- Numéro de version ---------- */
     textSize(16);        // petit
     fill(0, 0, 255);     // bleu
-    text("v3.31", width / 2, height - 30); // centré, partie basse
+    text("v3.30b", width / 2, height - 30); // centré, partie basse
     /* --------------------------------------- */
 
     if (millis() - introStartTime >= 2000) {
@@ -643,7 +643,7 @@ function drawMenu() {
   textAlign(CENTER, CENTER);
   fill('#FF7F00');          // orange vif
   textStyle(BOLD);
-  textSize(18);             // lisible sur mobile
+  textSize(30);             // lisible sur mobile
   const lines = [
     "Plus longue série :",
     "Odyssée la plus courte :",
