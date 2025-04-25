@@ -610,37 +610,30 @@ function draw() {
   // Écran blanc d'intro
   if (showIntro) {
 
-background(255);
-  fill('red');
-  ellipse(width/2, height/2, 200);    // TEST ░░░░░░░
+  background(255);                // 1) fond blanc une seule fois
   textAlign(CENTER, CENTER);
 
-  textSize(200);                      // valeur énorme pour le test
+  /* === TEST TEMPORAIRE === */
+  fill('red');
+  noStroke();
+  ellipse(width/2, height/2, 200); // cercle rouge visible
+  /* ======================= */
+
+  textFont('Press Start 2P');      // police rétro
+  textSize(100);                   // ajuste à ton goût
   fill(0);
-  text("TEST", width/2, height/2 - 150);
+  text("Push Up Odyssey", width/2, height/2);
 
-  noLoop();
-    
-    background(255);
-    textAlign(CENTER, CENTER);
+  // Numéro de version
+  textSize(16);
+  fill(0,0,255);
+  text("v3.30c", width/2, height - 30);
 
-    // Titre principal
-    textFont('Press Start 2P');   // impose la police rétro
-    textSize(100);
-    fill(0);
-    text("Push Up Odyssey", width / 2, height / 2);
-
-    /* ---------- Numéro de version ---------- */
-    textSize(16);        // petit
-    fill(0, 0, 255);     // bleu
-    text("v3.30c", width / 2, height - 30); // centré, partie basse
-    /* --------------------------------------- */
-
-    if (millis() - introStartTime >= 2000) {
-      showIntro = false;
-    }
-    return;
+  if (millis() - introStartTime >= 2000) {
+    showIntro = false;
   }
+  return;
+}
 
 function drawMenu() {
   // Affiche l'image de fond sur tout l'écran
