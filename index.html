@@ -605,13 +605,13 @@ function draw() {
   if (showIntro) {
     background(255);
     textAlign(CENTER, CENTER);
-    textSize(80);                 // taille lisible pour Press Start 2P
+    textSize(40);
     fill(0);
     text("Push Up Odyssey", width / 2, height / 2);
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.30d", width / 2, height - 30);
+    text("v3.30e", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -685,12 +685,12 @@ function drawRecords() {
   background(0);
   textAlign(CENTER, CENTER);
   textStyle(BOLD);
-  textSize(30);
+  textSize(25);
   fill('#FF7F00');                         // orange rétro
 
   const lines = [
     "Plus longue série :",
-    "Odyssée la plus courte :",
+    "Odyssée la plus rapide :",
     "Record d'Odyssées enchaînées :"
   ];
   const startY = height / 2 - 40;
@@ -1087,7 +1087,7 @@ window.onerror = (msg, src, line) => {
 };
 
 // 2) Redirige console.log / warn / error
-['log','warn','error'].forEach(fn => {
+/*['log','warn','error'].forEach(fn => {
   const o = console[fn];
   console[fn] = (...a) => {
     o.apply(console, a);
@@ -1096,9 +1096,9 @@ window.onerror = (msg, src, line) => {
     log.style.display = 'block';
     log.innerText += `\n[${fn}] ${a.join(' ')}`;
   };
-});
+});*/
 </script>
-<!-- ======================================================== -->
+//<!-- ======================================================== -->
 </body>
 </html>
 
