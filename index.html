@@ -79,6 +79,7 @@
     let echecImg, victoryImg;
     let menuBgImg;          // fond du menu
     let pressStartFont;                 // variable globale
+    const backSize = 60;   // taille du bouton ⏪ visible partout
 
 
     function preload() {
@@ -457,7 +458,6 @@ function setup() {
   });
 
   /* ===== flèche ⏪ ===== */
-  const backSize = 60;
   backButton = createButton("⏪");
   backButton.position(windowWidth - backSize - 10,
                       windowHeight - backSize - 10);
