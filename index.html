@@ -94,11 +94,6 @@
       // Charge les 2 nouvelles images
       echecImg = loadImage('echec.png');
       victoryImg = loadImage('victory.png');
-        
-      // charge la police en .woff (lien Google Fonts direct)
-  pressStartFont = loadFont(
-    'https://fonts.gstatic.com/s/pressstart2p/v15/e3t4euO8T-267oIAQAu6jDQyK3nUMvHQ.woff'
-  );
     }
 
     /********************************************
@@ -614,7 +609,7 @@ function draw() {
   if (showIntro) {
     background(255);
     textAlign(CENTER, CENTER);
-    textFont(pressStartFont);
+    textFont('Press Start 2P');
     textSize(180);                 // taille lisible pour Press Start 2P
     fill(0);
     text("Push Up Odyssey", width / 2, height / 2);
