@@ -442,8 +442,14 @@ labels.forEach((txt, i) => {
 /* cache tous les boutons tant que l'intro est affichée */
 menuButtons.forEach(b => b.hide());
       
-  // Seul "Jouer" actif pour l'instant
-  menuButtons.slice(1).forEach(b => b.attribute('disabled', ''));
+  // Boutons actifs et inactifs du menu
+  menuButtons.forEach((b, i) => {
+  const txt = labels[i];
+  if (txt !== "Jouer" && txt !== "Records") {
+    b.attribute('disabled', '');
+  }
+});
+
 
 /* Flèche retour ⏪ */
 const backSize = 60;                                // 50 % plus gros que 40 px
