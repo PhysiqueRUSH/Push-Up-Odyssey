@@ -472,6 +472,25 @@ function setup() {
     if (txt !== "Jouer" && txt !== "Records") b.attribute('disabled', '');
   });
 
+  function onValidatePerf() {
+  // si la session courante bat le record stocké, on met à jour
+  if (sessionTime > bestTime) {
+    bestTime = sessionTime;
+    localStorage.setItem('pushupBestTime', bestTime);
+  }
+  // message éphémère
+  let msg = createDiv("Perfs enregistrées");
+  msg.style('position','absolute');
+  msg.style('top','50%');
+  msg.style('left','50%');
+  msg.style('transform','translate(-50%,-50%)');
+  msg.style('padding','10px 20px');
+  msg.style('background','white');
+  msg.style('color','black');
+  msg.style('font-size','18px');
+  setTimeout(() => msg.remove(), 1000);
+  }
+
   /* ===== flèche ⏪ ===== */
   backButton = createButton("⏪");
   backButton.position(windowWidth - backSize - 10,
