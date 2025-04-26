@@ -420,6 +420,10 @@ function setup() {
   canvas.style('z-index', '-1');
   // → Charger l’ancien record (ou 0 si jamais défini)
   bestTime = parseFloat(localStorage.getItem('pushupBestTime')) || 0;
+  bestOdysseyTime = localStorage.getItem('pushupBestOdysseyTime') !== null
+                   ? parseFloat(localStorage.getItem('pushupBestOdysseyTime'))
+                   : null;
+  
   background(0);
 
   setupRetroSound();
@@ -437,6 +441,7 @@ function setup() {
   select('#stopButton').hide();
   select('#chrono').hide();
   select('#level').hide();
+  select('#odysseyChrono').hide()
 
   /* ---- callbacks des boutons de jeu ---- */
   select('#startButton').mousePressed(startGame);
@@ -499,10 +504,15 @@ function setup() {
   });
 
   function onValidatePerf() {
-  // si la session courante bat le record stocké, on met à jour
+  // 1) record échec (déjà en place) :
   if (sessionTime > bestTime) {
     bestTime = sessionTime;
     localStorage.setItem('pushupBestTime', bestTime);
+  }
+  // 2) record Odyssée :
+  if (bestOdysseyTime === null || odysseyTime < bestOdysseyTime) {
+    bestOdysseyTime = odysseyTime;
+    localStorage.setItem('pushupBestOdysseyTime', bestOdysseyTime);
   }
   // message éphémère
   let msg = createDiv("Perfs enregistrées");
@@ -716,7 +726,11 @@ function draw() {
     if (elapsed >= countdownDuration) {
       countdownActive = false;
       running         = true;
-      startTime       = millis();
+// === DÉBUT de l’ODYSSÉE ===
+  odysseyStartTime = millis();
+  odysseyFinished  = false;
+  odysseyTime      = 0;
+  select('#odysseyChrono').show();
       startBackgroundMusic();
     }
     return;
@@ -824,9 +838,22 @@ function playMode() {
   select('#level').html("Niveau: <span style='font-weight:bold; background-color:white; padding:2px; color:" +
                           currentColor + ";'>" + level + "</span>");
 
+  // === nouveau bloc pour odysseyChrono ===
+if (!odysseyFinished) {
+  // défile tant qu’on n’a pas franchi le drapeau
+  let t = millis() - odysseyStartTime;
+  select('#odysseyChrono').html("Odyssée : " + (t/1000).toFixed(1) + " sec");
+} else {
+  // fixe la valeur finale
+  select('#odysseyChrono').html("Odyssée : " + (odysseyTime/1000).toFixed(1) + " sec");
+}
+
   // Passage en mode transition (victoire) après 180 s
   if (totalTime >= victoryTime) {
     finalPointAtVictory = linePoints[linePoints.length - 1];
+     // === FIN de l’ODYSSÉE ===
+   odysseyFinished = true;
+   odysseyTime     = millis() - odysseyStartTime;
     mode = "transition";
     transitionStartTime = millis();
     running = false;
