@@ -81,6 +81,10 @@
     /********************************************
      ** 1) Variables pour IMAGES et PRELOAD    **
      ********************************************/
+   // — record persistant (en ms) et durée de la session en cours —
+    let bestTime = 0;
+    let sessionTime = 0;
+    
     let pushupImg1, pushupImg2, pushupImg3, pushupImg4, pushupImg5;
     let echecImg, victoryImg;
     let menuBgImg;          // fond du menu                 // variable globale
@@ -397,6 +401,8 @@ function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.position(0, 0);
   canvas.style('z-index', '-1');
+  // → Charger l’ancien record (ou 0 si jamais défini)
+  bestTime = parseFloat(localStorage.getItem('pushupBestTime')) || 0;
   background(0);
 
   setupRetroSound();
