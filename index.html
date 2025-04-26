@@ -575,6 +575,7 @@ function goToMenu() {
   restartGame();             // réinitialise le jeu
   menuButtons.forEach(b => b.show());
   mode = "menu";
+  resetRecordsBtn.hide()
 }
 
     /********************************************
@@ -671,7 +672,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.31b", width / 2, height - 30);
+    text("v3.40a", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -742,31 +743,41 @@ function drawMenu() {
 ---------------------------------------------------------- */
 function drawRecords() {
   background(0);
-  // style
-  textAlign(LEFT, TOP);   // gauche / centré verticalement
+  textAlign(LEFT, TOP);
   textStyle(BOLD);
   textSize(15);
   fill('#FF7F00');
 
-  // données
-  const lines  = [
-    "Plus longue série avant échec :",
+  // conversion en secondes
+  let bestSec = (bestTime / 1000).toFixed(1);
+
+  const marginX = 40;
+  const lineH   = 40;
+  const totalLines = 6;
+  const startY  = (height - totalLines * lineH) / 2 + lineH/2;
+
+  // 1ère ligne : record dynamique
+  text(`Plus longue série avant échec : ${bestSec} s`,
+       marginX, startY + 0 * lineH);
+
+  // autres libellés
+  const otherLines = [
     "Odyssée la plus rapide :",
     "Record d'Odyssées enchaînées :",
     "Personnage préféré :",
     "Nombre d'échecs moyen par Odyssée :",
     "Régularité :"
   ];
-
-  /* ---- placement ---- */
-  const lineH   = 40;          // interligne
-  const marginX = 40;          // marge gauche désirée
-  const totalH  = lines.length * lineH;
-  const startY  = (height - totalH) / 2 + lineH/2;   // centre vertical
-
-  for (let i = 0; i < lines.length; i++) {
-    text(lines[i], marginX, startY + i * lineH);
+  for (let i = 0; i < otherLines.length; i++) {
+    text(otherLines[i],
+         marginX, startY + (i+1) * lineH);
   }
+
+  // on place et on montre le bouton de reset tout en bas, centré
+  resetRecordsBtn
+    .position(width/2 - resetRecordsBtn.size().width/2,
+              height - 80)
+    .show();
 }
 
 
