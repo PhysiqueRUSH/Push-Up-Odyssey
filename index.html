@@ -85,9 +85,18 @@
     /********************************************
      ** 1) Variables pour IMAGES et PRELOAD    **
      ********************************************/
-   // — record persistant (en ms) et durée de la session en cours —
-    let bestTime = 0;
-    let sessionTime = 0;
+// === Records de chronos ===
+// record “échec le plus long” (déjà en place)
+let bestTime = 0;
+// record “Odyssée la plus rapide” (ms), null si jamais
+let bestOdysseyTime = null;
+
+// pour la session en cours :
+let sessionTime = 0;          // durée Go→Échec
+let odysseyStartTime = 0;     // timestamp début d’“Odyssée”
+let odysseyFinished = false;  // true dès qu’on atteint le drapeau
+let odysseyTime = 0;          // durée complète jusqu’au drapeau
+
     let validateBtn;
     
     let pushupImg1, pushupImg2, pushupImg3, pushupImg4, pushupImg5;
