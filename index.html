@@ -568,7 +568,8 @@ function goToMenu() {
     function stopGame() {
       // Si on est en mode playing et qu'on est en train de courir
       if (running && mode === "playing") {
-        elapsedTime += millis() - startTime;
+        // durée de la session Go→Échec
+        sessionTime = millis() - startTime;
         running = false;
         stopBackgroundMusic();
 
