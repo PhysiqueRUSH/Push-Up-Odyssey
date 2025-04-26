@@ -619,7 +619,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.30f", width / 2, height - 30);
+    text("v3.31b", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -690,24 +690,20 @@ function drawMenu() {
 ---------------------------------------------------------- */
 function drawRecords() {
   background(0);
-
-textSize(12);   // vraiment minuscule
-text("test", 10, 30);
-
-textSize(80);   // très grand
-text("TEST", 10, 120);
-
   // style
-  textAlign(LEFT, CENTER);   // gauche / centré verticalement
+  textAlign(LEFT, TOP);   // gauche / centré verticalement
   textStyle(BOLD);
-  textSize(10);
+  textSize(15);
   fill('#FF7F00');
 
   // données
   const lines  = [
-    "Plus longue série :",
+    "Plus longue série avant échec :",
     "Odyssée la plus rapide :",
     "Record d'Odyssées enchaînées :"
+    "Personnage préféré :"
+    "Nombre d'échecs moyen par Odyssée :"
+    "Régularité :"
   ];
 
   /* ---- placement ---- */
