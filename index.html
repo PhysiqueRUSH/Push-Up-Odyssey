@@ -408,6 +408,8 @@ function setup() {
   setupRetroSound();
   setupBackgroundMusic();
 
+  let validateBtn;
+
   introStartTime = millis();
   currentX = 0;
   currentZone = 3;
@@ -426,6 +428,14 @@ function setup() {
   select('#stopButton').mousePressed(stopGame);
   select('#restartButton').style('display', 'none');
   select('#restartButton').mousePressed(restartGame);
+
+    validateBtn = createButton("Valider les perfs 💾");
+  validateBtn.id("validateButton");
+  validateBtn.style('font-size', '20px');
+  validateBtn.style('padding', '10px 20px');
+  validateBtn.position(width/2 - 100, height/2 + 200);  // on repositionnera plus tard
+  validateBtn.hide();
+  validateBtn.mousePressed(onValidatePerf);
 
   /* ========== Boutons du MENU ========== */
   const labels = ["Jouer", "Instructions", "Personnages",
