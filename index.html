@@ -84,6 +84,7 @@
    // — record persistant (en ms) et durée de la session en cours —
     let bestTime = 0;
     let sessionTime = 0;
+    let validateBtn;
     
     let pushupImg1, pushupImg2, pushupImg3, pushupImg4, pushupImg5;
     let echecImg, victoryImg;
@@ -410,8 +411,6 @@ function setup() {
 
   setupRetroSound();
   setupBackgroundMusic();
-
-  let validateBtn;
 
   introStartTime = millis();
   currentX = 0;
