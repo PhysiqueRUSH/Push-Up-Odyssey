@@ -90,6 +90,8 @@
 let bestTime = 0;
 // record “Odyssée la plus rapide” (ms), null si jamais
 let bestOdysseyTime = null;
+  // réinitialisation 
+    let resetRecordsBtn;
 
 // pour la session en cours :
 let sessionTime = 0;          // durée Go→Échec
@@ -465,7 +467,16 @@ function setup() {
   resetRecordsBtn.hide();
   resetRecordsBtn.mousePressed(() => {
     bestTime = 0;
+    bestOdysseyTime = null;
     localStorage.removeItem('pushupBestTime');
+    resetRecordsBtn = createButton("Réinitialiser les records");
+// … style et hide() …
+resetRecordsBtn.mousePressed(() => {
+  bestTime = 0;
+  bestOdysseyTime = null;
+  localStorage.removeItem('pushupBestTime');
+  localStorage.removeItem('pushupBestOdysseyTime');
+});
   });
 
   /* ========== Boutons du MENU ========== */
@@ -694,7 +705,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.40a", width / 2, height - 30);
+    text("v3.41", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -776,6 +787,9 @@ function drawRecords() {
 
   // conversion en secondes
   let bestSec = (bestTime / 1000).toFixed(1);
+  let odoLabel = (bestOdysseyTime !== null)
+               ? (bestOdysseyTime/1000).toFixed(1) + " s"
+               : "ø";
 
   const marginX = 40;
   const lineH   = 40;
@@ -785,6 +799,9 @@ function drawRecords() {
   // 1ère ligne : record dynamique
   text(`Plus longue série avant échec : ${bestSec} s`,
        marginX, startY + 0 * lineH);
+  // Ligne 2 : record Odyssée
+  text(`Odyssée la plus rapide : ${odoLabel}`,
+       marginX, startY + 1*lineH);
 
   // autres libellés
   const otherLines = [
