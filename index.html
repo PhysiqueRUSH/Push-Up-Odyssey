@@ -615,6 +615,7 @@ function goToMenu() {
     // cache chrono et niveau de nouveau
   select('#chrono').hide();
   select('#level').hide();
+  select('#odysseyChrono').hide();
   restartGame();             // réinitialise le jeu
   menuButtons.forEach(b => b.show());
   mode = "menu";
@@ -629,9 +630,6 @@ function goToMenu() {
 
   // 1er clic : on lance le compte à rebours au lieu de démarrer direct
   if (!gameStarted) {
-        // on affiche le chrono et le niveau dès le compte à rebours
-    select('#chrono').show();
-    select('#level').show();
     
     countdownActive    = true;
     countdownStartTime = millis();
@@ -641,6 +639,11 @@ function goToMenu() {
 
   // clics suivants (après le countdown) : lancement normal du jeu
   if (!running && mode === "playing") {
+    select('#chrono').show();
+    select('#level').show();
+    select('#odysseyChrono').show();
+    odysseyStartTime = millis();
+    odysseyFinished  = false;
     echecActive = false;
     running     = true;
     startTime   = millis();
@@ -715,7 +718,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.41", width / 2, height - 30);
+    text("v3.42", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
