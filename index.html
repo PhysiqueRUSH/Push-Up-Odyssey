@@ -625,38 +625,16 @@ function goToMenu() {
     /********************************************
      ** 7) BOUTONS : START, STOP, RESTART      **
      ********************************************/
+
 function startGame() {
   userStartAudio();  // débloque l'audio sur mobile
 
-  // 1er clic : on lance le compte à rebours au lieu de démarrer direct
+  // Premier clic : on lance le compte-à-rebours
   if (!gameStarted) {
-+   // on montre le chrono et le niveau tout de suite
-+   select('#chrono').show();
-+   select('#level').show();
-+   // on garde l’odyssée cachée jusqu’au vrai démarrage
-+   select('#odysseyChrono').hide();
-
     countdownActive    = true;
     countdownStartTime = millis();
-    gameStarted        = true;  // marque le début (même si on n'est pas encore running)
+    gameStarted        = true;
     return;
-  }
-
-  // clics suivants (après le countdown) : lancement normal du jeu
-  if (!running && mode === "playing") {
-    select('#chrono').show();
-    select('#level').show();
-    select('#odysseyChrono').show();
-    odysseyStartTime = millis();
-    odysseyFinished  = false;
-    echecActive = false;
-    running     = true;
-    startTime   = millis();
-    startBackgroundMusic();
-    prevLevel   = 1;
-    levelPopupTimestamp = millis();
-    victorySoundPlayed  = false;
-    happyEndingPlayed   = false;
   }
 }
 
@@ -723,7 +701,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.42b", width / 2, height - 30);
+    text("v3.42c", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -742,28 +720,44 @@ function draw() {
   }
 
   /* — 4. Compte à rebours — */
-  if (countdownActive) {
-    background(0);
-    textAlign(CENTER, CENTER);
-    textSize(80);
-    fill(255);
+if (countdownActive) {
+  background(0);
+  textAlign(CENTER, CENTER);
+  textSize(80);
+  fill(255);
+  let elapsed     = millis() - countdownStartTime;
+  let secondsLeft = 5 - floor(elapsed / 1000);
+  text(secondsLeft > 0 ? secondsLeft : "GO!", width / 2, height / 2);
 
-    let elapsed     = millis() - countdownStartTime;
-    let secondsLeft = 5 - floor(elapsed / 1000);
-    text(secondsLeft > 0 ? secondsLeft : "GO!", width / 2, height / 2);
+  if (elapsed >= countdownDuration) {
+    // → fin du countdown, on démarre vraiment la partie
+    countdownActive   = false;
+    mode              = "playing";
+    running           = true;
+    startTime         = millis();
+    odysseyStartTime  = millis();
+    odysseyFinished   = false;
+    prevLevel         = 1;
+    levelPopupTimestamp = millis();
+    victorySoundPlayed  = false;
+    happyEndingPlayed   = false;
+    echecActive         = false;
 
-    if (elapsed >= countdownDuration) {
-      countdownActive = false;
-      running         = true;
-// === DÉBUT de l’ODYSSÉE ===
-  odysseyStartTime = millis();
-  odysseyFinished  = false;
-  odysseyTime      = 0;
-  select('#odysseyChrono').show();
-      startBackgroundMusic();
-    }
-    return;
+    // on remet les deux chronos à zéro et on les affiche
+    select('#chrono')
+      .html("Temps : 0.0 sec")
+      .show();
+    select('#level')
+      .html("Niveau : 1")
+      .show();
+    select('#odysseyChrono')
+      .html("Odyssée : 0.0 sec")
+      .show();
+
+    startBackgroundMusic();
   }
+  return;
+}
 
   /* — 5. Modes de jeu — */
   if (mode === "playing") {
