@@ -636,6 +636,19 @@ function startGame() {
     gameStarted        = true;
     return;
   }
+  
+// clics suivants (après un échec) : relancer la session "Temps"
+// sans toucher à l'Odyssée
+if (mode === "playing" && !running) {
+// réinitialiser et afficher le chrono Temps
+startTime    = millis();
+sessionTime  = 0;
+select('#chrono').html("Temps : 0.0 sec").show();
+
+// relancer le son et le jeu
+running = true;
+startBackgroundMusic();
+}
 }
 
     function stopGame() {
@@ -701,7 +714,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.42c", width / 2, height - 30);
+    text("v3.42d", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -862,8 +875,18 @@ function playMode() {
   let delayMax = map(level, 1, 7, 4000, 200);   // Niveau 1 → 4 000 ms, niveau 7 → 200 ms
   /* -------------------------------------------------------------------------------- */
 
-  let seconds = (totalTime / 1000).toFixed(1);
-  select('#chrono').html("Temps: " + seconds + " sec");
+  // --- Chrono principal “Temps” ---
+let displaySec;
+if (running) {
+  // tant qu’on court, c’est le temps écoulé depuis startTime
+  displaySec = ((millis() - startTime) / 1000);
+} else {
+  // quand on est arrêté, on affiche la sessionTime figée
+  displaySec = (sessionTime / 1000);
+}
+select('#chrono')
+  .html("Temps : " + displaySec.toFixed(1) + " sec");
+
   select('#level').html("Niveau: <span style='font-weight:bold; background-color:white; padding:2px; color:" +
                           currentColor + ";'>" + level + "</span>");
 
