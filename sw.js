@@ -1,5 +1,5 @@
 // Incrémente la version du cache pour forcer la mise à jour
-const CACHE_NAME = 'push-up-odyssey-cache-v3.42e';
+const CACHE_NAME = 'push-up-odyssey-cache-v3.42f';
 
 // Liste de tous les fichiers qu’on veut précacher
 const urlsToCache = [
