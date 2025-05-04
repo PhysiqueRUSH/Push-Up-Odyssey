@@ -625,12 +625,17 @@ function goToMenu() {
     /********************************************
      ** 7) BOUTONS : START, STOP, RESTART      **
      ********************************************/
-   function startGame() {
+function startGame() {
   userStartAudio();  // débloque l'audio sur mobile
 
   // 1er clic : on lance le compte à rebours au lieu de démarrer direct
   if (!gameStarted) {
-    
++   // on montre le chrono et le niveau tout de suite
++   select('#chrono').show();
++   select('#level').show();
++   // on garde l’odyssée cachée jusqu’au vrai démarrage
++   select('#odysseyChrono').hide();
+
     countdownActive    = true;
     countdownStartTime = millis();
     gameStarted        = true;  // marque le début (même si on n'est pas encore running)
@@ -718,7 +723,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.42", width / 2, height - 30);
+    text("v3.42b", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
