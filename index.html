@@ -627,46 +627,47 @@ function goToMenu() {
      ********************************************/
 
 function startGame() {
-  userStartAudio();  // débloque l'audio sur mobile
+  userStartAudio();
 
-  // Premier clic : on lance le compte-à-rebours
+  // 1er clic → lance le compte-à-rebours
   if (!gameStarted) {
     countdownActive    = true;
     countdownStartTime = millis();
     gameStarted        = true;
     return;
   }
-  
-// clics suivants (après un échec) : relancer la session "Temps"
-// sans toucher à l'Odyssée
-if (mode === "playing" && !running) {
-// réinitialiser et afficher le chrono Temps
-startTime    = millis();
-sessionTime  = 0;
-select('#chrono').html("Temps : 0.0 sec").show();
 
-// relancer le son et le jeu
-running = true;
-startBackgroundMusic();
+  // re-Go après un échec : ne touche pas à elapsedTime,  
+  // mais relance le chrono principal pour une nouvelle session
+  if (mode === "playing" && !running) {
+    startTime   = millis();
+    sessionTime = 0;
+    select('#chrono')
+      .html("Temps : 0.0 sec")
+      .show();
+
+    running = true;
+    startBackgroundMusic();
+  }
 }
+
+function stopGame() {
+  if (running && mode === "playing") {
+    // 1) figer la durée de la session actuelle pour le record
+    sessionTime = millis() - startTime;
+    // 2) ajouter ce segment au cumul pour le niveau
+    elapsedTime += sessionTime;
+
+    running = false;
+    stopBackgroundMusic();
+
+    echecActive = true;
+    let lastPt = linePoints[linePoints.length - 1];
+    echecX = lastPt.x;
+    echecY = lastPt.y;
+  }
 }
 
-    function stopGame() {
-      // Si on est en mode playing et qu'on est en train de courir
-      if (running && mode === "playing") {
-        // durée de la session Go→Échec
-        sessionTime = millis() - startTime;
-        running = false;
-        stopBackgroundMusic();
-
-        // Active l'image échec
-        echecActive = true;
-        // Position = dernier point de la ligne
-        let lastPt = linePoints[linePoints.length - 1];
-        echecX = lastPt.x;
-        echecY = lastPt.y;
-      }
-    }
     function restartGame() {
       mode = "playing";
       running = false;
@@ -714,7 +715,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.42d", width / 2, height - 30);
+    text("v3.42e", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -852,151 +853,340 @@ function drawRecords() {
 /********************************************
  ** 9) Jeu : playMode, transition, spiral  **
  ********************************************/
-function playMode() {
-    if (backButton) backButton.show();
-  let totalTime = elapsedTime;
-  if (running) totalTime += millis() - startTime;
 
-  /* ------ Calcul progressif du niveau ------ */
-  let level = 7;              // par défaut (temps ≥ somme)
+  function playMode() 
+  {
+  // Assure la flèche “⏪” visible
+  if (backButton) backButton.show();
+
+  // 1) Calcul du segment en cours et du temps total pour le niveau
+  let runningSegment = running ? millis() - startTime : 0;
+  let totalTime = elapsedTime + runningSegment;
+
+  // 2) Détermination du niveau (1 → 7) selon totalTime
+  let level = 7;
   let cumulative = 0;
   for (let i = 0; i < levelDurations.length; i++) {
     cumulative += levelDurations[i];
     if (totalTime < cumulative) {
-      level = i + 1;          // niveaux 1 → 7
+      level = i + 1;
       break;
     }
   }
   currentColor = strokeColors[level - 1];
-  /* ----------------------------------------- */
 
-  /* ------ Durée d’attente avant changement de zone (décroît avec le niveau) ------ */
-  let delayMin = map(level, 1, 7, 1000,  50);   // Niveau 1 → 1 000 ms, niveau 7 → 50 ms
-  let delayMax = map(level, 1, 7, 4000, 200);   // Niveau 1 → 4 000 ms, niveau 7 → 200 ms
-  /* -------------------------------------------------------------------------------- */
+  // 3) Mise à jour du chrono principal “Temps”
+  if (running) {
+    sessionTime = runningSegment;
+  }
+  select('#chrono')
+    .html("Temps : " + (sessionTime / 1000).toFixed(1) + " sec");
 
-  // --- Chrono principal “Temps” ---
-let displaySec;
-if (running) {
-  // tant qu’on court, c’est le temps écoulé depuis startTime
-  displaySec = ((millis() - startTime) / 1000);
-} else {
-  // quand on est arrêté, on affiche la sessionTime figée
-  displaySec = (sessionTime / 1000);
-}
-select('#chrono')
-  .html("Temps : " + displaySec.toFixed(1) + " sec");
+  // 4) Mise à jour du chrono “Odyssée”
+  if (!odysseyFinished) {
+    let t = millis() - odysseyStartTime;
+    select('#odysseyChrono')
+      .html("Odyssée : " + (t / 1000).toFixed(1) + " sec");
+  } else {
+    select('#odysseyChrono')
+      .html("Odyssée : " + (odysseyTime / 1000).toFixed(1) + " sec");
+  }
 
-  select('#level').html("Niveau: <span style='font-weight:bold; background-color:white; padding:2px; color:" +
-                          currentColor + ";'>" + level + "</span>");
+  // 5) Mise à jour de l’affichage du niveau
+  select('#level')
+    .html("Niveau : <span style='font-weight:bold; background-color:white; padding:2px; color:" +
+          currentColor + ";'>" + level + "</span>");
 
-  // === nouveau bloc pour odysseyChrono ===
-if (!odysseyFinished) {
-  // défile tant qu’on n’a pas franchi le drapeau
-  let t = millis() - odysseyStartTime;
-  select('#odysseyChrono').html("Odyssée : " + (t/1000).toFixed(1) + " sec");
-} else {
-  // fixe la valeur finale
-  select('#odysseyChrono').html("Odyssée : " + (odysseyTime/1000).toFixed(1) + " sec");
-}
-
-  // Passage en mode transition (victoire) après 180 s
+  // 6) Passage en mode transition si temps total ≥ victoire
   if (totalTime >= victoryTime) {
     finalPointAtVictory = linePoints[linePoints.length - 1];
-     // === FIN de l’ODYSSÉE ===
-   odysseyFinished = true;
-   odysseyTime     = millis() - odysseyStartTime;
-    mode = "transition";
-    transitionStartTime = millis();
+
+    // figer l’odyssée
+    odysseyFinished = true;
+    odysseyTime     = millis() - odysseyStartTime;
+
+    // arrêter la partie
     running = false;
     stopBackgroundMusic();
-  } else {
-    background(0);
-    if (running) {
-      currentX += speedX;
 
-      if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
-        nextZoneTransitionTime = 0;
-        let p = random(1);
-        let newZone = currentZone;
-
-        if (p < 0.4) {
-          newZone = currentZone;
-        } else if (p < 0.6) {
-          let candidates = [];
-          if (currentZone > 1) candidates.push(currentZone - 1);
-          if (currentZone < 5) candidates.push(currentZone + 1);
-          if (candidates.length > 0) newZone = random(candidates);
-        } else if (p < 0.8) {
-          let candidates = [];
-          if (currentZone - 2 >= 1) candidates.push(currentZone - 2);
-          if (currentZone + 2 <= 5) candidates.push(currentZone + 2);
-          if (candidates.length > 0) newZone = random(candidates);
-        } else {
-          if (currentZone === 1) newZone = 5;
-          else if (currentZone === 5) newZone = 1;
-          else if (currentZone === 2) newZone = 5;
-          else if (currentZone === 4) newZone = 1;
-          else if (currentZone === 3) newZone = random([1, 5]);
-        }
-
-        transitionInProgress = true;
-        zoneTransitionStartTime = millis();
-        oldY = currentY;
-        targetY = zoneCenterY(newZone);
-        targetZone = newZone;
-      }
-
-      if (transitionInProgress) {
-        let progress = (millis() - zoneTransitionStartTime) / zoneTransitionDuration;
-        progress = constrain(progress, 0, 1);
-        let newY = lerp(oldY, targetY, progress);
-
-        let dynamicZone = getZoneFromY(newY);
-        currentZone = dynamicZone;
-
-        if (!oscillateMode) {
-          currentY = newY;
-        } else {
-          let baseY = newY;
-          let amplitude = 10;
-          let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
-          currentY = baseY + oscillVal;
-        }
-
-        if (progress >= 1) {
-          transitionInProgress = false;
-          /* ------------ délai suivant dépend du niveau ------------ */
-          nextZoneTransitionTime = millis() + random(delayMin, delayMax);
-          /* -------------------------------------------------------- */
-          oscillateMode = (random(1) < 0.5);        // on garde encore des oscillations
-          if (oscillateMode) oscillationStartTime = millis();
-        }
-      } else {
-        if (oscillateMode) {
-          let baseY = zoneCenterY(currentZone);
-          let amplitude = 10;
-          let oscillVal = amplitude * sin(TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod);
-          currentY = baseY + oscillVal;
-        } else {
-          currentY = zoneCenterY(currentZone);
-        }
-      }
-
-      linePoints.push({ x: currentX, y: currentY });
-    }
-
-    offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
-    strokeWeight(4);
-    stroke(currentColor);
-    noFill();
-    beginShape();
-    for (let pt of linePoints) {
-      vertex(pt.x - offsetX, pt.y);
-    }
-    endShape();
+    // bascule vers transition
+    mode = "transition";
+    transitionStartTime = millis();
+    return;
   }
+
+  // 7) Dessin de la partie en cours
+  background(0);
+
+  if (running) {
+    // déplacement horizontal
+    currentX += speedX;
+
+    // gestion des transitions de zones
+    if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
+      nextZoneTransitionTime = 0;
+      let p = random(1);
+      let newZone = currentZone;
+
+      if (p < 0.4) {
+        newZone = currentZone;
+      } else if (p < 0.6) {
+        let candidates = [];
+        if (currentZone > 1) candidates.push(currentZone - 1);
+        if (currentZone < 5) candidates.push(currentZone + 1);
+        if (candidates.length > 0) newZone = random(candidates);
+      } else if (p < 0.8) {
+        let candidates = [];
+        if (currentZone - 2 >= 1) candidates.push(currentZone - 2);
+        if (currentZone + 2 <= 5) candidates.push(currentZone + 2);
+        if (candidates.length > 0) newZone = random(candidates);
+      } else {
+        if (currentZone === 1) newZone = 5;
+        else if (currentZone === 5) newZone = 1;
+        else if (currentZone === 2) newZone = 5;
+        else if (currentZone === 4) newZone = 1;
+        else if (currentZone === 3) newZone = random([1, 5]);
+      }
+
+      transitionInProgress   = true;
+      zoneTransitionStartTime = millis();
+      oldY                   = currentY;
+      targetY                = zoneCenterY(newZone);
+      targetZone             = newZone;
+    }
+
+    if (transitionInProgress) {
+      let progress = (millis() - zoneTransitionStartTime) / zoneTransitionDuration;
+      progress = constrain(progress, 0, 1);
+      let newY = lerp(oldY, targetY, progress);
+
+      let dynamicZone = getZoneFromY(newY);
+      currentZone = dynamicZone;
+
+      if (!oscillateMode) {
+        currentY = newY;
+      } else {
+        let amplitude = 10;
+        let oscillVal = amplitude * sin(
+          TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod
+        );
+        currentY = newY + oscillVal;
+      }
+
+      if (progress >= 1) {
+        transitionInProgress = false;
+        nextZoneTransitionTime = millis() +
+                                 random(
+                                   map(level, 1, 7, 1000, 50),
+                                   map(level, 1, 7, 4000, 200)
+                                 );
+        oscillateMode = (random(1) < 0.5);
+        if (oscillateMode) oscillationStartTime = millis();
+      }
+    } else {
+      if (oscillateMode) {
+        let baseY = zoneCenterY(currentZone);
+        let amplitude = 10;
+        let oscillVal = amplitude * sin(
+          TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod
+        );
+        currentY = baseY + oscillVal;
+      } else {
+        currentY = zoneCenterY(currentZone);
+      }
+    }
+
+    // ajouter le nouveau point
+    linePoints.push({ x: currentX, y: currentY });
+  }
+
+  // 8) Scroll horizontal
+  offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
+
+  // 9) Tracé de la courbe
+  strokeWeight(4);
+  stroke(currentColor);
+  noFill();
+  beginShape();
+  for (let pt of linePoints) {
+    vertex(pt.x - offsetX, pt.y);
+  }
+  endShape();
+
+  // 10) Dessin des éléments UI
+  drawZoneBoundaries();
+  drawZoneLabels();
+  drawLevelPopup();
+  drawPushupImageForZone(currentZone);
+  drawEchecImage();
 }
+
+function playMode() {
+  // Assure la flèche “⏪” visible
+  if (backButton) backButton.show();
+
+  // 1) Calcul du segment en cours et du temps total pour le niveau
+  let runningSegment = running ? millis() - startTime : 0;
+  let totalTime = elapsedTime + runningSegment;
+
+  // 2) Détermination du niveau (1 → 7) selon totalTime
+  let level = 7;
+  let cumulative = 0;
+  for (let i = 0; i < levelDurations.length; i++) {
+    cumulative += levelDurations[i];
+    if (totalTime < cumulative) {
+      level = i + 1;
+      break;
+    }
+  }
+  currentColor = strokeColors[level - 1];
+
+  // 3) Mise à jour du chrono principal “Temps”
+  if (running) {
+    sessionTime = runningSegment;
+  }
+  select('#chrono')
+    .html("Temps : " + (sessionTime / 1000).toFixed(1) + " sec");
+
+  // 4) Mise à jour du chrono “Odyssée”
+  if (!odysseyFinished) {
+    let t = millis() - odysseyStartTime;
+    select('#odysseyChrono')
+      .html("Odyssée : " + (t / 1000).toFixed(1) + " sec");
+  } else {
+    select('#odysseyChrono')
+      .html("Odyssée : " + (odysseyTime / 1000).toFixed(1) + " sec");
+  }
+
+  // 5) Mise à jour de l’affichage du niveau
+  select('#level')
+    .html("Niveau : <span style='font-weight:bold; background-color:white; padding:2px; color:" +
+          currentColor + ";'>" + level + "</span>");
+
+  // 6) Passage en mode transition si temps total ≥ victoire
+  if (totalTime >= victoryTime) {
+    finalPointAtVictory = linePoints[linePoints.length - 1];
+
+    // figer l’odyssée
+    odysseyFinished = true;
+    odysseyTime     = millis() - odysseyStartTime;
+
+    // arrêter la partie
+    running = false;
+    stopBackgroundMusic();
+
+    // bascule vers transition
+    mode = "transition";
+    transitionStartTime = millis();
+    return;
+  }
+
+  // 7) Dessin de la partie en cours
+  background(0);
+
+  if (running) {
+    // déplacement horizontal
+    currentX += speedX;
+
+    // gestion des transitions de zones
+    if (!transitionInProgress && millis() >= nextZoneTransitionTime) {
+      nextZoneTransitionTime = 0;
+      let p = random(1);
+      let newZone = currentZone;
+
+      if (p < 0.4) {
+        newZone = currentZone;
+      } else if (p < 0.6) {
+        let candidates = [];
+        if (currentZone > 1) candidates.push(currentZone - 1);
+        if (currentZone < 5) candidates.push(currentZone + 1);
+        if (candidates.length > 0) newZone = random(candidates);
+      } else if (p < 0.8) {
+        let candidates = [];
+        if (currentZone - 2 >= 1) candidates.push(currentZone - 2);
+        if (currentZone + 2 <= 5) candidates.push(currentZone + 2);
+        if (candidates.length > 0) newZone = random(candidates);
+      } else {
+        if (currentZone === 1) newZone = 5;
+        else if (currentZone === 5) newZone = 1;
+        else if (currentZone === 2) newZone = 5;
+        else if (currentZone === 4) newZone = 1;
+        else if (currentZone === 3) newZone = random([1, 5]);
+      }
+
+      transitionInProgress   = true;
+      zoneTransitionStartTime = millis();
+      oldY                   = currentY;
+      targetY                = zoneCenterY(newZone);
+      targetZone             = newZone;
+    }
+
+    if (transitionInProgress) {
+      let progress = (millis() - zoneTransitionStartTime) / zoneTransitionDuration;
+      progress = constrain(progress, 0, 1);
+      let newY = lerp(oldY, targetY, progress);
+
+      let dynamicZone = getZoneFromY(newY);
+      currentZone = dynamicZone;
+
+      if (!oscillateMode) {
+        currentY = newY;
+      } else {
+        let amplitude = 10;
+        let oscillVal = amplitude * sin(
+          TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod
+        );
+        currentY = newY + oscillVal;
+      }
+
+      if (progress >= 1) {
+        transitionInProgress = false;
+        nextZoneTransitionTime = millis() +
+                                 random(
+                                   map(level, 1, 7, 1000, 50),
+                                   map(level, 1, 7, 4000, 200)
+                                 );
+        oscillateMode = (random(1) < 0.5);
+        if (oscillateMode) oscillationStartTime = millis();
+      }
+    } else {
+      if (oscillateMode) {
+        let baseY = zoneCenterY(currentZone);
+        let amplitude = 10;
+        let oscillVal = amplitude * sin(
+          TWO_PI * (millis() - oscillationStartTime) / oscillationPeriod
+        );
+        currentY = baseY + oscillVal;
+      } else {
+        currentY = zoneCenterY(currentZone);
+      }
+    }
+
+    // ajouter le nouveau point
+    linePoints.push({ x: currentX, y: currentY });
+  }
+
+  // 8) Scroll horizontal
+  offsetX = currentX > width / 3 ? currentX - width / 3 : 0;
+
+  // 9) Tracé de la courbe
+  strokeWeight(4);
+  stroke(currentColor);
+  noFill();
+  beginShape();
+  for (let pt of linePoints) {
+    vertex(pt.x - offsetX, pt.y);
+  }
+  endShape();
+
+  // 10) Dessin des éléments UI
+  drawZoneBoundaries();
+  drawZoneLabels();
+  drawLevelPopup();
+  drawPushupImageForZone(currentZone);
+  drawEchecImage();
+}
+
 
     function transitionMode() {
         if (backButton) backButton.show();
