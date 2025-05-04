@@ -715,7 +715,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.42e", width / 2, height - 30);
+    text("v3.42f", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -806,32 +806,35 @@ function drawMenu() {
 ---------------------------------------------------------- */
 function drawRecords() {
   background(0);
+
+  // désactive les contours pour le texte
+  noStroke();
+
+  // style du texte
+  fill('#FF7F00');
   textAlign(LEFT, TOP);
   textStyle(BOLD);
   textSize(15);
-  fill('#FF7F00');
 
-  // conversion en secondes
+  // conversion du record Échec
   let bestSec = (bestTime / 1000).toFixed(1);
-  let odoLabel = (bestOdysseyTime !== null)
-               ? (bestOdysseyTime/1000).toFixed(1) + " s"
+  // conversion du record Odyssée (ou ø)
+  let odoLabel = bestOdysseyTime !== null
+               ? (bestOdysseyTime / 1000).toFixed(1) + " s"
                : "ø";
 
   const marginX = 40;
   const lineH   = 40;
   const totalLines = 6;
-  const startY  = (height - totalLines * lineH) / 2 + lineH/2;
+  const startY  = (height - totalLines * lineH) / 2 + lineH / 2;
 
-  // 1ère ligne : record dynamique
+  // Affichage des lignes
   text(`Plus longue série avant échec : ${bestSec} s`,
        marginX, startY + 0 * lineH);
-  // Ligne 2 : record Odyssée
   text(`Odyssée la plus rapide : ${odoLabel}`,
-       marginX, startY + 1*lineH);
+       marginX, startY + 1 * lineH);
 
-  // autres libellés
   const otherLines = [
-    "Odyssée la plus rapide :",
     "Record d'Odyssées enchaînées :",
     "Personnage préféré :",
     "Nombre d'échecs moyen par Odyssée :",
@@ -839,13 +842,13 @@ function drawRecords() {
   ];
   for (let i = 0; i < otherLines.length; i++) {
     text(otherLines[i],
-         marginX, startY + (i+1) * lineH);
+         marginX, startY + (i+2) * lineH);
   }
 
-  // on place et on montre le bouton de reset tout en bas, centré
+  // bouton Réinitialiser centré en bas
+  const btnW = resetRecordsBtn.size().width;
   resetRecordsBtn
-    .position(width/2 - resetRecordsBtn.size().width/2,
-              height - 80)
+    .position(width/2 - btnW/2, height - 80)
     .show();
 }
 
