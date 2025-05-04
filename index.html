@@ -24,39 +24,48 @@
       font-size: 20px;
       padding: 10px 20px;
     }
-    #startButton { top: 20px; left: 20px; }
-    #stopButton { top: 20px; right: 20px; }
-    #chrono {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 16px;
-      color: white;
-      z-index: 10;
-    }
-    #level {
-      position: absolute;
-      top: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 16px;
-      font-weight: bold;
-      background-color: white;
-      padding: 2px 6px;
-      color: black;
-      z-index: 10;
-    }
-    #odysseyChrono {
+#startButton,
+#stopButton {
+  font-size: 16px;
+  padding: 6px 12px;
+  top: 70px;        /* baisse un peu sous les chronos */
+}
+#startButton { left: 20px; }
+#stopButton  { right: 20px; }
+
+#odysseyChrono {
   position: absolute;
-  top: 50px;               /* juste sous le niveau (qui est à 30px) */
+  top: 10px;          /* Odyssée en haut */
   left: 50%;
   transform: translateX(-50%);
   font-size: 16px;
   color: white;
   z-index: 10;
-  display: none;           /* caché au départ */
-    }
+  display: none;
+}
+
+#level {
+  position: absolute;
+  top: 30px;          /* Niveau au milieu */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  color: white;
+  z-index: 10;
+  display: none;
+}
+
+#chrono {
+  position: absolute;
+  top: 50px;          /* Série en dessous */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  color: white;
+  z-index: 10;
+  display: none;
+}
+
     #restartButton {
       position: absolute;
       z-index: 20;
@@ -653,20 +662,30 @@ function startGame() {
 
 function stopGame() {
   if (running && mode === "playing") {
-    // 1) figer la durée de la session actuelle pour le record
+    // 1) Calcul de la durée Go→Échec pour cette session
     sessionTime = millis() - startTime;
-    // 2) ajouter ce segment au cumul pour le niveau
+
+    // 2) Mettre à jour le record si on bat l'ancien
+    if (sessionTime > bestTime) {
+      bestTime = sessionTime;
+      localStorage.setItem('pushupBestTime', bestTime);
+    }
+
+    // 3) Ajouter ce segment au cumul pour le calcul des niveaux
     elapsedTime += sessionTime;
 
+    // 4) Arrêt du jeu
     running = false;
     stopBackgroundMusic();
 
+    // 5) Affichage de l’image Échec
     echecActive = true;
     let lastPt = linePoints[linePoints.length - 1];
     echecX = lastPt.x;
     echecY = lastPt.y;
   }
 }
+
 
     function restartGame() {
       mode = "playing";
@@ -689,7 +708,7 @@ function stopGame() {
       select('#restartButton').style('display', 'none');
       select('#restartButton').hide();
       validateBtn.hide();
-      select('#chrono').html("Temps: 0.0 sec");
+      select('#chrono').html("Série : 0.0 sec");
       select('#level').html("Niveau: <span style='color:white;'>1</span>");
 
       // On enlève l'image échec si elle était présente
@@ -715,7 +734,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.42f", width / 2, height - 30);
+    text("v3.43", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -759,7 +778,7 @@ if (countdownActive) {
 
     // on remet les deux chronos à zéro et on les affiche
     select('#chrono')
-      .html("Temps : 0.0 sec")
+      .html("Série : 0.0 sec")
       .show();
     select('#level')
       .html("Niveau : 1")
@@ -883,7 +902,7 @@ function drawRecords() {
     sessionTime = runningSegment;
   }
   select('#chrono')
-    .html("Temps : " + (sessionTime / 1000).toFixed(1) + " sec");
+    .html("Série : " + (sessionTime / 1000).toFixed(1) + " sec");
 
   // 4) Mise à jour du chrono “Odyssée”
   if (!odysseyFinished) {
@@ -1049,7 +1068,7 @@ function playMode() {
     sessionTime = runningSegment;
   }
   select('#chrono')
-    .html("Temps : " + (sessionTime / 1000).toFixed(1) + " sec");
+    .html("Série : " + (sessionTime / 1000).toFixed(1) + " sec");
 
   // 4) Mise à jour du chrono “Odyssée”
   if (!odysseyFinished) {
