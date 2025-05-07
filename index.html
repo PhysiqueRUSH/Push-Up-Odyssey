@@ -486,7 +486,7 @@ function setup() {
   resetRecordsBtn.hide();
   resetRecordsBtn.mousePressed(() => {
     bestTime = 0;
-    bestOdysseyTime = null;
+    bestOdysseyTime = 0;
     localStorage.removeItem('pushupBestTime');
     resetRecordsBtn = createButton("Réinitialiser les records");
 // … style et hide() …
@@ -495,6 +495,8 @@ bestTime = 0;
 bestOdysseyTime = 0;
 localStorage.setItem('pushupBestTime', 0);
 localStorage.setItem('pushupBestOdysseyTime', 0);
+localStorage.removeItem('pushupBestTime');
+localStorage.removeItem('pushupBestOdysseyTime');
 });
   });
 
@@ -734,7 +736,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.43b", width / 2, height - 30);
+    text("v3.43c", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
