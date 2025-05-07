@@ -441,9 +441,9 @@ function setup() {
   canvas.style('z-index', '-1');
   // → Charger l’ancien record (ou 0 si jamais défini)
   bestTime = parseFloat(localStorage.getItem('pushupBestTime')) || 0;
-  bestOdysseyTime = localStorage.getItem('pushupBestOdysseyTime') !== null
-                   ? parseFloat(localStorage.getItem('pushupBestOdysseyTime'))
-                   : null;
+// au lancement, on récupère soit la valeur stockée, soit 0
+  bestOdysseyTime = parseFloat(localStorage.getItem('pushupBestOdysseyTime')) || 0;
+
   
   background(0);
 
@@ -491,10 +491,10 @@ function setup() {
     resetRecordsBtn = createButton("Réinitialiser les records");
 // … style et hide() …
 resetRecordsBtn.mousePressed(() => {
-  bestTime = 0;
-  bestOdysseyTime = null;
-  localStorage.removeItem('pushupBestTime');
-  localStorage.removeItem('pushupBestOdysseyTime');
+bestTime = 0;
+bestOdysseyTime = 0;
+localStorage.setItem('pushupBestTime', 0);
+localStorage.setItem('pushupBestOdysseyTime', 0);
 });
   });
 
@@ -540,10 +540,10 @@ resetRecordsBtn.mousePressed(() => {
     localStorage.setItem('pushupBestTime', bestTime);
   }
   // 2) record Odyssée :
-  if (bestOdysseyTime === null || odysseyTime < bestOdysseyTime) {
-    bestOdysseyTime = odysseyTime;
-    localStorage.setItem('pushupBestOdysseyTime', bestOdysseyTime);
-  }
+  if (bestOdysseyTime <= 0 || odysseyTime < bestOdysseyTime) {
+  bestOdysseyTime = odysseyTime;
+  localStorage.setItem('pushupBestOdysseyTime', bestOdysseyTime);
+}
   // message éphémère
   let msg = createDiv("Perfs enregistrées");
   msg.style('position','absolute');
@@ -734,7 +734,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.43", width / 2, height - 30);
+    text("v3.43b", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
@@ -836,11 +836,10 @@ function drawRecords() {
   textSize(15);
 
   // conversion du record Échec
-  let bestSec = (bestTime / 1000).toFixed(1);
-  // conversion du record Odyssée (ou ø)
-  let odoLabel = bestOdysseyTime !== null
-               ? (bestOdysseyTime / 1000).toFixed(1) + " s"
-               : "ø";
+// record Échec (toujours 0.0 s si égal à zéro)
+let bestSec = (bestTime    / 1000).toFixed(1) + " s";
+// record Odyssée (toujours 0.0 s si égal à zéro)
+let odoLabel = (bestOdysseyTime / 1000).toFixed(1) + " s";
 
   const marginX = 40;
   const lineH   = 40;
@@ -848,10 +847,10 @@ function drawRecords() {
   const startY  = (height - totalLines * lineH) / 2 + lineH / 2;
 
   // Affichage des lignes
-  text(`Plus longue série avant échec : ${bestSec} s`,
-       marginX, startY + 0 * lineH);
-  text(`Odyssée la plus rapide : ${odoLabel}`,
-       marginX, startY + 1 * lineH);
+text(`Plus longue série avant échec : ${bestSec}`,
+     marginX, startY + 0 * lineH);
+text(`Odyssée la plus rapide : ${odoLabel}`,
+     marginX, startY + 1 * lineH);
 
   const otherLines = [
     "Record d'Odyssées enchaînées :",
