@@ -478,27 +478,23 @@ function setup() {
   validateBtn.hide();
   validateBtn.mousePressed(onValidatePerf);
 
-  resetRecordsBtn = createButton("Réinitialiser les records");
-  resetRecordsBtn.id("resetRecordsButton");
-  resetRecordsBtn.style('font-size', '18px');
-  resetRecordsBtn.style('padding', '8px 16px');
-  // on le cache par défaut
-  resetRecordsBtn.hide();
-  resetRecordsBtn.mousePressed(() => {
-    bestTime = 0;
-    bestOdysseyTime = 0;
-    localStorage.removeItem('pushupBestTime');
-    resetRecordsBtn = createButton("Réinitialiser les records");
-// … style et hide() …
+resetRecordsBtn = createButton("Réinitialiser les records");
+resetRecordsBtn.id("resetRecordsButton");
+resetRecordsBtn.style('font-size', '18px');
+resetRecordsBtn.style('padding', '8px 16px');
+resetRecordsBtn.hide();
 resetRecordsBtn.mousePressed(() => {
+// 1) Réinitialiser les variables en mémoire
 bestTime = 0;
 bestOdysseyTime = 0;
-localStorage.setItem('pushupBestTime', 0);
-localStorage.setItem('pushupBestOdysseyTime', 0);
+
+// 2) Effacer les deux clés dans localStorage
 localStorage.removeItem('pushupBestTime');
 localStorage.removeItem('pushupBestOdysseyTime');
+
+// 3) Si on est déjà dans Records, forcer la mise à jour de l’affichage
+if (mode === MODE_RECORDS) drawRecords();
 });
-  });
 
   /* ========== Boutons du MENU ========== */
   const labels = ["Jouer", "Instructions", "Personnages",
@@ -736,7 +732,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.43c", width / 2, height - 30);
+    text("v3.43d", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
