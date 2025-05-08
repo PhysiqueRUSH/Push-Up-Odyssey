@@ -610,7 +610,11 @@ function windowResized() {
     select('#level').hide();
     mode = MODE_RECORDS;                        // on passe en mode records
   }
+   else if (label === "Quitter") {
+    // 1) Tenter de fermer la fenêtre (fonctionne pour une PWA ou fenêtre ouverte par script)
+    window.close();  
       // d'autres boutons seront codés plus tard
+   }  
 }
 
 function goToMenu() {
@@ -732,7 +736,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.43d", width / 2, height - 30);
+    text("v3.44", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
