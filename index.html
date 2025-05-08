@@ -498,12 +498,10 @@ if (mode === MODE_RECORDS) drawRecords();
 
   /* ========== Boutons du MENU ========== */
   const labels = ["Jouer", "Instructions", "Personnages",
-                  "Records", "Défis et Trophées", "Quitter"];
+                "Records", "Quitter"];
 
-  labels.forEach((txt, i) => {
-    const labelHTML = (txt === "Défis et Trophées")
-                      ? "Défis&nbsp;et<br>Trophées"
-                      : txt;
+labels.forEach((txt, i) => {
+  const labelHTML = txt;
 
     const btn = createButton(labelHTML);
     btn.position(width / 2 - 80, height / 2 - 120 + i * 60);
@@ -736,7 +734,7 @@ function draw() {
 
     textSize(16);                  // numéro de version
     fill(0, 0, 255);
-    text("v3.44", width / 2, height - 30);
+    text("v3.45", width / 2, height - 30);
 
     if (millis() - introStartTime >= 2000) showIntro = false;
     return;
