@@ -525,10 +525,10 @@ if (mode === MODE_RECORDS) drawRecords();
   menuButtons.forEach(b => b.hide());
   toggleMenuButtons(false);
 
-  /* la suite : désactive Instr., Perso., … sauf Jouer et Records */
+  /* la suite : désactive Instr., Perso., … sauf Jouer, Records et Quitter */
   menuButtons.forEach((b, i) => {
     const txt = labels[i];
-    if (txt !== "Jouer" && txt !== "Records") b.attribute('disabled', '');
+    if (txt !== "Jouer" && txt !== "Records" && txt !== "Quitter") b.attribute('disabled', '');
   });
 
   function onValidatePerf() {
